@@ -94,9 +94,9 @@ And here's a more complex example, using the `KeyChord.CreateFromMap()` function
             "a", ToggleGroup.Bind("Weather"),       ;             a - Toggle all weather skins
             "s", ToggleGroup.Bind("SimpleWeather"), ;             s - Toggle SimpleWeather skins
             "t", ToggleGroup.Bind("TinyWeather")    ;             t - Toggle TinyWeather skins
-        )),
-    )),
-)).Execute()
+        )),                                         ;
+    )),                                             ; Note: A 3 second timeout is used for all of the
+)).Execute()                                        ; nested KeyChord instances above.
 ```
 ## Class Outline
 
