@@ -39,7 +39,7 @@ nestedKeyChord.Add("b", Run.Bind("https://www.bing.com/"))
 nestedKeyChord.Add("a", Run.Bind("https://www.autohotkey.com/"))
 
 ; Then we will add the new KeyChord to our original keychord, bound to the "k" key.
-examplKeyChord.Add("k", nestedKeyChord)
+exampleKeyChord.Add("k", nestedKeyChord)
 ```
 Now, "Ctrl+Win+a, then k (within 2 seconds), then g (within 3 seconds)" will Open Google, and so on down the list of hotkeys.
 
@@ -50,10 +50,11 @@ In update `1.3`, the `KeyChord.CreateFromMap()` function was added, which allows
 ; Create a new KeyChord from a map.
 ; The map is a dictionary of key sequences, and the values are the actions to be performed.
 exampleKeyChord := KeyChord.CreateFromMap(3, Map(
-    "c", RunOrActivate.Bind("calc"),                                ; Calculator
-    "n", RunOrActivate.Bind("notepad"),                             ; Notepad
-    "w", RunOrActivate.Bind("wordpad"),                             ; Wordpad
-    "p", RunOrActivate.Bind("mspaint"),                             ; Paint
+    "1", "example_email@somewhere.com",
+    "c", Run.Bind("calc"),                                ; Calculator
+    "n", Run.Bind("notepad"),                             ; Notepad
+    "w", Run.Bind("wordpad"),                             ; Wordpad
+    "p", Run.Bind("mspaint"),                             ; Paint
     "f", Run.Bind("shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}") ; This PC
 ))
 
@@ -66,10 +67,11 @@ With this function, and KeyChord recursion, you can declare nested KeyChords wit
 #Include "KeyChord.ahk"
 
 exampleKeyChord := KeyChord.CreateFromMap(3, Map(
-    "c", RunOrActivate.Bind("calc"),                                 ; Calculator
-    "n", RunOrActivate.Bind("notepad"),                              ; Notepad
-    "w", RunOrActivate.Bind("wordpad"),                              ; Wordpad
-    "p", RunOrActivate.Bind("mspaint"),                              ; Paint
+    "1", "example_email@somewhere.com",
+    "c", Run.Bind("calc"),                                 ; Calculator
+    "n", Run.Bind("notepad"),                              ; Notepad
+    "w", Run.Bind("wordpad"),                              ; Wordpad
+    "p", Run.Bind("mspaint"),                              ; Paint
     "f", Run.Bind("shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}"), ; This PC
     "k", KeyChord.CreateFromMap(3, Map(
         "g", Run.Bind("https://www.google.com/"),
