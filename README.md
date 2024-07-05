@@ -96,7 +96,7 @@ And here's a more complex example, using the `KeyChord.CreateFromMap()` function
             "t", ToggleGroup.Bind("TinyWeather")    ;             t - Toggle TinyWeather skins
         )),                                         ;
     )),                                             ; Note: A 3 second timeout is used for all of the
-)).Execute()                                        ; nested KeyChord instances above.
+)).Execute()                                        ; KeyChord instances above.
 ```
 ## Class Outline
 
