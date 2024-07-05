@@ -86,7 +86,28 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 
 ## Class Outline
 
-- ###Add(key, command)
+- `Add(key, command)`
   - Add a key-command mapping or a nested key Chord.
   - `key` : `{String}` => The key that will activate the command
   - `command` : `{Integer} | {Float} | {Boolean} | {String} | {BoundFunc} | {KeyChord}` => The command to execute when the key is pressed.
+
+- `Remove(key)`
+  - Remove a key-command mapping.
+  - `key` : `{String}` => The key of the key-command mapping to be removed.
+
+- `Update(key, newCommand)`
+  - Update a key-command mapping with a new command.
+  - `key` : `{String}` => The key of the key-command mapping to be updated.
+  - `newCommand` : `{Integer} | {Float} | {Boolean} | {String} | {BoundFunc} | {KeyChord}` => The new command to be executed when the key is pressed.
+
+- `Clear()`
+  - Clears the KeyChord completely of all key-command bindings.
+
+- 'Execute(timeout := 3)`
+  - Execute the command or nested key Chord mapped to the user input.
+  - `timeout` : `{Integer}` => The timeout value (in seconds) for the key chord. Default := 3.
+
+- `static CreateFromMap(timeout, map)`
+  - Function to create and bind key chords from a Map of key-command bindings.
+  - `timeout` : `{Integer}` => The timeout value (in seconds) for the key chord.
+  - `map` : `{Map}` => The map of key-command bindings.
