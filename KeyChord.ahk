@@ -59,23 +59,13 @@ class KeyChord
 {
     __New(defaultTimeout := 3)
     {
-        /**
-         *  @type {Map}
-         *  @desc Map of keys to commands
-        **/
-        this.commands := Map()
-
-        /**
-         *  @type {Map}
-         *  @desc Map of keys to nested KeyChord instances
-        **/
+        ; Map of keys to nested KeyChord instances
         this.nestedChords := Map()
 
-        /**
-         * @type {Integer}
-         * @desc The default timeout (in seconds) for user input
-         * @default 3
-        **/
+        ; Map of keys to commands
+        this.commands := Map()
+        
+        ; Check to make sure timeout is valid
         if !(defaultTimeout <= 0)
         {
             this.defaultTimeout := defaultTimeout
@@ -84,12 +74,6 @@ class KeyChord
         {
             MsgBox("Invalid timeout value: " defaultTimeout "`nTimeout must be greater than 0.", "Error")
         }
-    }
-
-    __value
-    {
-        get => this
-        set => this := value
     }
 
     /**
@@ -123,6 +107,49 @@ class KeyChord
             Return ""
         }
         return caseSensitive ? key.Input : StrLower(key.Input)
+    }
+
+    /**
+     *  Function to create and bind key chords from a Map of key-command bindings.
+     *  
+     *  
+     *  ```ahk2
+     *  ; Create a Map of key-command bindings
+     *  appBindings := {
+     *      "1": 1,                                        ; {Integer}   1
+     *      "f": 43.54,                                    ; {Float}     43.54
+     *      "s": "Hello World",                            ; {String}    "Hello World"
+     *      "b": True,                                     ; {Boolean}   True
+     *      "c": Run.Bind("calc"),                         ; {BoundFunc} Calculator
+     *      "n": Run.Bind("notepad"),                      ; {BoundFunc} Notepad
+     *      "w": Run.Bind("wordpad"),                      ; {BoundFunc} Wordpad
+     *      "p": Run.Bind("mspaint"),                      ; {BoundFunc} Paint
+     *      "t": () => ( Send("^c"), MsgBox(A_Clipboard) ) ; {Func}
+     *  }
+     *  
+     *  ; Create a new KeyChord instance and assign it to the appKeyChord variable
+     *  ; Uses the static function CreateFromMap() to create the KeyChord.
+     *  ; `timeout` is optional, the default value is `3` seconds.
+     *  appKeyChord := KeyChord.CreateFromMap(2, appBindings)
+     *  
+     *  ^#1::appKeyChord.Execute() ; execute the key chord
+     *  ```
+     *  
+     *  @param {Integer} timeout The timeout in seconds.
+     *  @param {Map} bindingsMap A Map of key-command bindings.
+     *  
+     *  @return {KeyChord} A new KeyChord instance.
+    **/ 
+    static CreateFromMap(timeout, bindingsMap)
+    {
+        this.keyChord := KeyChord(timeout)
+
+        for key, action in bindingsMap
+        {
+            this.keyChord.Add(key, action)
+        }
+
+        return this.keyChord
     }
 
     /**
@@ -203,25 +230,25 @@ class KeyChord
     **/
     Execute(timeout := this.defaultTimeout)
     {
-        key := this.GetUserInput(timeout)
+        this.key := this.GetUserInput(timeout)
 
-        if (key == "")
+        if (this.key == "")
         {
             MsgBox("No input received.", "Error")
         }
-        else if this.commands.Has(key)
+        else if this.commands.Has(this.key)
         {
-            command := this.commands.Get(key)
-            this.ExecuteCommand(command, timeout)
+            this.command := this.commands.Get(this.key)
+            this.ExecuteCommand(this.command, timeout)
         }
-        else if this.nestedChords.Has(key)
+        else if this.nestedChords.Has(this.key)
         {
-            nestedChord := this.nestedChords.Get(key)
-            nestedChord.Execute(timeout)
+            this.nestedChord := this.nestedChords.Get(this.key)
+            this.nestedChord.Execute(timeout)
         }
         else
         {
-            MsgBox("Key not found: " key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" key "`", Run.Bind(`"notepad`"))", "Error")
+            MsgBox("Key not found: " this.key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" this.key "`", Run.Bind(`"notepad`"))", "Error")
         }
 
         return
