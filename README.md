@@ -82,6 +82,22 @@ With this function, and KeyChord recursion, you can declare nested KeyChords wit
 )).Execute()
 ```
 
+And here's a more complex example, using the `KeyChord.CreateFromMap()` function (from my own config):
+```
+^#r::KeyChord.CreateFromMap(3, Map(                 ; Ctrl+Win+r
+    "m", Rainmeter.Bind("!Manage"),                 ;     m - Open Rainmeter management interface.
+    "r", Rainmeter.Bind("!RefreshApp"),             ;     r - Refresh all
+    "t", KeyChord.CreateFromMap(3, Map(             ;     t - Toggles (Nested KeyChord)
+        "a", RainMeter.Bind("!Toggle"),             ;         a - Toggle all
+        "b", ToggleMeter.Bind("MeterBackground"),   ;         b - Toggle background meter
+        "w", KeyChord.CreateFromMap(3, Map(         ;         w - Weather Toggles (Nested KeyChord)
+            "a", ToggleGroup.Bind("Weather"),       ;             a - Toggle all weather skins
+            "s", ToggleGroup.Bind("SimpleWeather"), ;             s - Toggle SimpleWeather skins
+            "t", ToggleGroup.Bind("TinyWeather")    ;             t - Toggle TinyWeather skins
+        )),
+    )),
+)).Execute()
+```
 ## Class Outline
 
 - `Add(key, command)`
