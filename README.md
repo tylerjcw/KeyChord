@@ -87,5 +87,5 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 
 - `Add(key, command)`
   - Add a key-command mapping or a nested key Chord.
-  - `key` | `{String}` => The key that will activate the command
-  - `command` | `{Integer} | {Float} | {Boolean} | {String} | {BoundFunc}` => The command to execute when the key is pressed.
+  - `key` : `{String}` => The key that will activate the command
+  - `command` : `{Integer} | {Float} | {Boolean} | {String} | {BoundFunc} | {KeyChord}` => The command to execute when the key is pressed.
