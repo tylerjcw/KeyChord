@@ -42,7 +42,7 @@ nestedKeyChord.Add("a", Run.Bind("https://www.autohotkey.com/"))
 ; Then we will add the new KeyChord to our original keychord, bound to the "k" key.
 exampleKeyChord.Add("k", nestedKeyChord)
 
-; Call the execute function when our initial hotkey is hit.
+; Call the execute function when our initial hotkey is hit.0
 ^#a::exampleKeyChord.Execute()
 ```
 Now, "Ctrl+Win+a, then k (within 2 seconds), then g (within 3 seconds)" will Open Google, and so on down the list of hotkeys.
@@ -69,18 +69,18 @@ With this function, and KeyChord recursion, you can declare nested KeyChords wit
 ```
 #Include "KeyChord.ahk"
 
-^#a::KeyChord.CreateFromMap(3, Map(
-    "1", "example_email@somewhere.com",
-    "2", 42,
-    "3", 15.17,
-    "4", True,
-    "c", Run.Bind("calc"),                                           ; Calculator
-    "w", KeyChord.CreateFromMap(3, Map(
-        "g", Run.Bind("https://www.google.com/"),                    ; Google
-        "b", Run.Bind("https://www.bing.com/"),                      ; Bing
-        "a", Run.Bind("https://www.autohotkey.com/")                 ; AutoHotKey
-    ))
-)).Execute()
+^#a::KeyChord.CreateFromMap(3, Map(                  ; Ctrl+Win+a
+    "1", "example_email@somewhere.com",              ;     1 - Sends "example_email@somewhere.com"
+    "2", 42,                                         ;     2 - Sends 42
+    "3", 15.17,                                      ;     3 - Sends 15.17
+    "4", True,                                       ;     4 - Sends True (1)
+    "c", Run.Bind("calc"),                           ;     c - Calculator
+    "w", KeyChord.CreateFromMap(3, Map(              ;     w - Websites
+        "g", Run.Bind("https://www.google.com/"),    ;         g - Google
+        "b", Run.Bind("https://www.bing.com/"),      ;         b - Bing
+        "a", Run.Bind("https://www.autohotkey.com/") ;         a - AutoHotKey
+    ))                                               ;
+)).Execute()                                         ; Note: Both KeyChords use a 3 second timeout.
 ```
 
 And here's a more complex example, using the `KeyChord.CreateFromMap()` function (from my own config):
