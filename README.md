@@ -1,5 +1,6 @@
-# KeyChord
+# KeyChord Class for AutoHotKey v2
 
+## Summary & Examples
 KeyChord is an AutoHotKey v2 class for writing key chords (key sequences, key chains, whatever you wanna call them).
 
 In short, It allows hitting a chain "initiator" (usually just a regular hotkey), then hitting another key
@@ -85,7 +86,7 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 
 ## Class Outline
 
-- ###`Add(key, command)`
+- `Add(key, command)`
   - Add a key-command mapping or a nested key Chord.
   - `key` : `{String}` => The key that will activate the command
   - `command` : `{Integer} | {Float} | {Boolean} | {String} | {BoundFunc} | {KeyChord}` => The command to execute when the key is pressed.
