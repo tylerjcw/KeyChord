@@ -82,3 +82,7 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 
 ^#a::exampleKeyChord.Execute()
 ```
+
+**Class Outline
+-`Add()`
+ -`Execute()`
