@@ -4,7 +4,7 @@
  *  A class for writing key chords in AutoHotKey.
  *  Now combinations like "Ctrl+Win+d, x, u" are supported!
  *  
- *  @version 1.0
+ *  @version 1.3
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://autohotkey.com/boards/viewtopic.php?f=83&t=131037
  *  @license
