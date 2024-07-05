@@ -52,11 +52,10 @@ In update `1.3`, the `KeyChord.CreateFromMap()` function was added, which allows
 ; The map is a dictionary of key sequences, and the values are the actions to be performed.
 exampleKeyChord := KeyChord.CreateFromMap(3, Map(
     "1", "example_email@somewhere.com",
-    "c", Run.Bind("calc"),                                ; Calculator
-    "n", Run.Bind("notepad"),                             ; Notepad
-    "w", Run.Bind("wordpad"),                             ; Wordpad
-    "p", Run.Bind("mspaint"),                             ; Paint
-    "f", Run.Bind("shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}") ; This PC
+    "2", 42,
+    "3", 15.17,
+    "4", True,
+    "c", Run.Bind("calc"), 
 ))
 
 ^#a::exampleKeyChord.Execute()
@@ -124,3 +123,4 @@ And here's a more complex example, using the `KeyChord.CreateFromMap()` function
   - Function to create and bind key chords from a Map of key-command bindings.
   - `timeout` : `{Integer}` => The timeout value (in seconds) for the key chord.
   - `map` : `{Map}` => The map of key-command bindings.
+  - Returns a new `KeyChord` instance.
