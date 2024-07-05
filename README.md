@@ -68,15 +68,15 @@ With this function, and KeyChord recursion, you can declare nested KeyChords wit
 
 exampleKeyChord := KeyChord.CreateFromMap(3, Map(
     "1", "example_email@somewhere.com",
-    "c", Run.Bind("calc"),                                 ; Calculator
-    "n", Run.Bind("notepad"),                              ; Notepad
-    "w", Run.Bind("wordpad"),                              ; Wordpad
-    "p", Run.Bind("mspaint"),                              ; Paint
+    "c", Run.Bind("calc"),                                           ; Calculator
+    "n", Run.Bind("notepad"),                                        ; Notepad
+    "w", Run.Bind("wordpad"),                                        ; Wordpad
+    "p", Run.Bind("mspaint"),                                        ; Paint
     "f", Run.Bind("shell:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}"), ; This PC
     "k", KeyChord.CreateFromMap(3, Map(
-        "g", Run.Bind("https://www.google.com/"),
-        "b", Run.Bind("https://www.bing.com/"),
-        "a", Run.Bind("https://www.autohotkey.com/")
+        "g", Run.Bind("https://www.google.com/"),                    ; Google
+        "b", Run.Bind("https://www.bing.com/"),                      ; Bing
+        "a", Run.Bind("https://www.autohotkey.com/")                 ; AutoHotKey
     ))
 ))
 
