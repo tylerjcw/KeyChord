@@ -41,6 +41,9 @@ nestedKeyChord.Add("a", Run.Bind("https://www.autohotkey.com/"))
 
 ; Then we will add the new KeyChord to our original keychord, bound to the "k" key.
 exampleKeyChord.Add("k", nestedKeyChord)
+
+; Call the execute function when our initial hotkey is hit.
+^#a::exampleKeyChord.Execute()
 ```
 Now, "Ctrl+Win+a, then k (within 2 seconds), then g (within 3 seconds)" will Open Google, and so on down the list of hotkeys.
 
