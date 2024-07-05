@@ -67,7 +67,7 @@ With this function, and KeyChord recursion, you can declare nested KeyChords wit
 ```
 #Include "KeyChord.ahk"
 
-exampleKeyChord := KeyChord.CreateFromMap(3, Map(
+^#a::KeyChord.CreateFromMap(3, Map(
     "1", "example_email@somewhere.com",
     "c", Run.Bind("calc"),                                           ; Calculator
     "n", Run.Bind("notepad"),                                        ; Notepad
@@ -79,9 +79,7 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
         "b", Run.Bind("https://www.bing.com/"),                      ; Bing
         "a", Run.Bind("https://www.autohotkey.com/")                 ; AutoHotKey
     ))
-))
-
-^#a::exampleKeyChord.Execute()
+)).Execute()
 ```
 
 ## Class Outline
