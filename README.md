@@ -70,10 +70,10 @@ With this function, and KeyChord recursion, you can declare nested KeyChords wit
 ^#a::KeyChord.CreateFromMap(3, Map(
     "1", "example_email@somewhere.com",
     "2", 42,
-    "3", 97.89,
+    "3", 15.17,
     "4", True,
     "c", Run.Bind("calc"),                                           ; Calculator
-    "k", KeyChord.CreateFromMap(3, Map(
+    "w", KeyChord.CreateFromMap(3, Map(
         "g", Run.Bind("https://www.google.com/"),                    ; Google
         "b", Run.Bind("https://www.bing.com/"),                      ; Bing
         "a", Run.Bind("https://www.autohotkey.com/")                 ; AutoHotKey
