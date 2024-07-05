@@ -84,5 +84,6 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 ```
 
 **Class Outline
-- `Add()`
-  - `Execute()`
+- ***`Add(key, command)`
+  - Add a key-command mapping or a nested key Chord.
+  - 
