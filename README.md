@@ -85,4 +85,4 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 
 **Class Outline
 -`Add()`
-  _ `Execute()`
+  -`Execute()`
