@@ -103,7 +103,7 @@ exampleKeyChord := KeyChord.CreateFromMap(3, Map(
 - `Clear()`
   - Clears the KeyChord completely of all key-command bindings.
 
-- 'Execute(timeout := 3)`
+- `Execute(timeout := 3)`
   - Execute the command or nested key Chord mapped to the user input.
   - `timeout` : `{Integer}` => The timeout value (in seconds) for the key chord. Default := 3.
 
