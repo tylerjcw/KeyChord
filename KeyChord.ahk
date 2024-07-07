@@ -4,7 +4,7 @@
  *  A class for writing key chords in AutoHotKey.
  *  Now combinations like "Ctrl+Win+d, x, u" are supported!
  *  
- *  @version 1.31
+ *  @version 1.32
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://autohotkey.com/boards/viewtopic.php?f=83&t=131037
  *  @license
@@ -85,7 +85,9 @@ class KeyChord
      *  Switch GetUserInput(1)
      *  {
      *      Case "c":
-     *          RunOrActivate("Calculator", "calc")
+     *          Run("calc")
+     *      Case "+c":
+     *          Run("notepad")
      *  }
      *  ```
      *  
@@ -97,8 +99,8 @@ class KeyChord
     **/
     GetUserInput(timeout := 0, length := 1, caseSensitive := 0)
     {
-        key := InputHook("L" length " T" timeout)
-
+        key := InputHook("L" length " T" timeout " H")
+        key.KeyOpt("{LCtrl}{RCtrl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}", "N")
         key.Start()
 
         if !key.Wait()
@@ -106,7 +108,18 @@ class KeyChord
             MsgBox("Input timed out or failed.`nTimeout: " timeout "`nLength: " length, "Error")
             Return ""
         }
-        return caseSensitive ? key.Input : StrLower(key.Input)
+
+        modifiers := ""
+        if (GetKeyState("Ctrl", "P"))
+            modifiers .= "^"
+        if (GetKeyState("Alt", "P"))
+            modifiers .= "!"
+        if (GetKeyState("Shift", "P"))
+            modifiers .= "+"
+        if (GetKeyState("LWin", "P") or GetKeyState("RWin", "P"))
+            modifiers .= "#"
+
+        return modifiers . (caseSensitive ? key.Input : StrLower(key.Input))
     }
 
     /**
@@ -240,7 +253,8 @@ class KeyChord
 
         this.key := this.GetUserInput(timeout)
 
-        ToolTip()
+        ToolTip(this.key)
+        SetTimer () => ToolTip(), -1000
 
         if (this.key == "")
         {
