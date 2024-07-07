@@ -230,11 +230,21 @@ class KeyChord
     **/
     Execute(timeout := this.defaultTimeout)
     {
+        keyString := ""
+        for key in this.commands
+        {
+            keyString := key ", " keyString
+        }
+
+        ToolTip("Press a key...`n" keyString)
+        SetTimer () => ToolTip(), -(timeout * 1000)
+
         this.key := this.GetUserInput(timeout)
 
         if (this.key == "")
         {
-            MsgBox("No input received.", "Error")
+            ToolTip("Error: No input received.")
+            SetTimer () => ToolTip(), -1000
         }
         else if this.commands.Has(this.key)
         {
