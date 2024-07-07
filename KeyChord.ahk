@@ -67,13 +67,9 @@ class KeyChord
         
         ; Check to make sure timeout is valid
         if !(defaultTimeout <= 0)
-        {
             this.defaultTimeout := defaultTimeout
-        }
         else
-        {
             MsgBox("Invalid timeout value: " defaultTimeout "`nTimeout must be greater than 0.", "Error")
-        }
     }
 
     /**
@@ -132,9 +128,7 @@ class KeyChord
         for sKey in specialKeys
         {
             if (key.EndKey = "{" sKey "}")  ; Remove braces for comparison
-            {
                 return modifiers . key.EndKey  ; Return the special key with braces
-            }
         }
 
         ; If not a special key, return the input (with case consideration)
@@ -194,13 +188,9 @@ class KeyChord
     Add(key, command)
     {
         if IsObject(command) && (Type(command) == "KeyChord")
-        {
             this.nestedChords.Set(key, command)
-        }
         else
-        {
             this.commands.Set(key, command)
-        }
     }
 
     /**
@@ -211,17 +201,11 @@ class KeyChord
     Remove(key)
     {
         if this.commands.Has(key)
-        {
             this.commands.Delete(key)
-        }
         else if this.nestedChords.Has(key)
-        {
             this.nestedChords.Delete(key)
-        }
         else
-        {
             MsgBox("Key not found: " key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" key "`", Run.Bind(`"notepad`"))", "Error")
-        }
     }
 
     /**
@@ -233,17 +217,11 @@ class KeyChord
     Update(key, newCommand)
     {
         if this.commands.Has(key)
-        {
             this.commands.Set(key, newCommand)
-        }
         else if this.nestedChords.Has(key)
-        {
             this.nestedChords.Set(key, newCommand)
-        }
         else
-        {
             MsgBox("Key not found: " key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" key "`", Run.Bind(`"notepad`"))", "Error")
-        }
     }
 
     /**
