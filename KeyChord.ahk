@@ -237,9 +237,10 @@ class KeyChord
         }
 
         ToolTip("Press a key...`n" keyString)
-        SetTimer () => ToolTip(), -(timeout * 1000)
 
         this.key := this.GetUserInput(timeout)
+        
+        ToolTip()
 
         if (this.key == "")
         {
