@@ -102,7 +102,7 @@ class KeyChord
             "NumpadDown", "NumpadPgDn", "NumpadLeft", "NumpadClear", "NumpadRight", "NumpadHome", "NumpadUp", "NumpadPgUp", "NumpadDel", "Numpad0", "Numpad1", "Numpad2", "Numpad3",
             "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16",
             "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24"])
-            
+
         endKeys := ""
         for tempKey in specialKeys
         {
