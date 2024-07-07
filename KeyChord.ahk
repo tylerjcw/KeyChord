@@ -95,7 +95,7 @@ class KeyChord
     **/
     GetUserInput(timeout := 0)
     {
-        static specialKeys := ["Backspace", "Delete", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Insert", "Tab", "Enter", "Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"]
+        static specialKeys := ["Backspace", "Delete", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Insert", "Tab", "Enter", "Esc", "AppsKey", "PrintScreen", "CtrlBreak", "Pause", "Help", "Sleep", "Browser_Back", "Browser_Forward", "Browser_Refresh", "Browser_Stop", "Browser_Search", "Browser_Favorites", "Browser_Home", "Volume_Mute", "Volume_Up", "Volume_Down", "Media_Next", "Media_Prev", "Media_Stop", "Media_Play_Pause", "Launch_Mail", "Launch_Media", "Launch_App1", "Launch_App2", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24"]
         endKeys := ""
         for tempKey in specialKeys
         {
