@@ -95,7 +95,7 @@ class KeyChord
     **/
     GetUserInput(timeout := 0)
     {
-        static specialKeys := ["Backspace", "Delete", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Insert", "Tab", "Enter", "Esc", "AppsKey", "PrintScreen", "CtrlBreak", "Pause", "Help", "Sleep", "Browser_Back", "Browser_Forward", "Browser_Refresh", "Browser_Stop", "Browser_Search", "Browser_Favorites", "Browser_Home", "Volume_Mute", "Volume_Up", "Volume_Down", "Media_Next", "Media_Prev", "Media_Stop", "Media_Play_Pause", "Launch_Mail", "Launch_Media", "Launch_App1", "Launch_App2", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24"]
+        static specialKeys := ["CapsLock", "Space", "Backspace", "Delete", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Insert", "Tab", "Enter", "Esc", "ScrollLock", "AppsKey", "PrintScreen", "CtrlBreak", "Pause", "Help", "Sleep", "Browser_Back", "Browser_Forward", "Browser_Refresh", "Browser_Stop", "Browser_Search", "Browser_Favorites", "Browser_Home", "Volume_Mute", "Volume_Up", "Volume_Down", "Media_Next", "Media_Prev", "Media_Stop", "Media_Play_Pause", "Launch_Mail", "Launch_Media", "Launch_App1", "Launch_App2", "NumpadDot", "NumpadDiv", "NumpadMult", "NumpadAdd", "NumpadSub", "NumpadEnter", "NumLock", "NumpadIns", "NumpadEnd", "NumpadDown", "NumpadPgDn", "NumpadLeft", "NumpadClear", "NumpadRight", "NumpadHome", "NumpadUp", "NumpadPgUp", "NumpadDel", "Numpad0", "Numpad1", "Numpad2", "Numpad3", "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24"]
         endKeys := ""
         for tempKey in specialKeys
         {
@@ -128,7 +128,7 @@ class KeyChord
         for sKey in specialKeys
         {
             if (key.EndKey = "{" sKey "}")  ; Remove braces for comparison
-                return modifiers . key.EndKey  ; Return the special key with braces
+                return modifiers . key.EndKey
         }
 
         ; If not a special key, return the input (with case consideration)
