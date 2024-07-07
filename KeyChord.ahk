@@ -97,15 +97,24 @@ class KeyChord
      *  
      *  @return {String} The user's input key strokes.
     **/
-    GetUserInput(timeout := 0, length := 1, caseSensitive := 0)
+    GetUserInput(timeout := 0)
     {
-        key := InputHook("L" length " T" timeout " H")
-        key.KeyOpt("{LCtrl}{RCtrl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}", "N")
+        static specialKeys := ["Backspace", "Delete", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Insert", "Tab", "Enter", "Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"]
+        endKeys := ""
+        for tempKey in specialKeys
+        {
+            tempKey := "{" tempKey "}"
+            endKeys .= tempKey
+        }
+
+        key := InputHook("L1 T" timeout, endKeys)
+        key.KeyOpt("{All}", "S")  ; Suppress all keys
+        key.KeyOpt("{LCtrl}{RCtrl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}", "N")  ; Allow detection of modifiers
         key.Start()
 
         if !key.Wait()
         {
-            MsgBox("Input timed out or failed.`nTimeout: " timeout "`nLength: " length, "Error")
+            MsgBox("Input timed out or failed.`nTimeout: " timeout, "Error")
             Return ""
         }
 
@@ -119,7 +128,18 @@ class KeyChord
         if (GetKeyState("LWin", "P") or GetKeyState("RWin", "P"))
             modifiers .= "#"
 
-        return modifiers . (caseSensitive ? key.Input : StrLower(key.Input))
+        ; Check if the EndKey matches any special key
+        for sKey in specialKeys
+        {
+            if (key.EndKey = "{" sKey "}")  ; Remove braces for comparison
+            {
+                return modifiers . key.EndKey  ; Return the special key with braces
+            }
+        }
+
+        ; If not a special key, return the input (with case consideration)
+        input := key.Input ? key.Input : key.EndKey
+        return modifiers . input
     }
 
     /**
@@ -251,7 +271,9 @@ class KeyChord
 
         ToolTip("Press a key...`n" keyString)
 
+        Suspend(True)
         this.key := this.GetUserInput(timeout)
+        Suspend(False)
 
         ToolTip(this.key)
         SetTimer () => ToolTip(), -1000
