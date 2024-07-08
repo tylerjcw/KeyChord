@@ -73,6 +73,9 @@ class KeyChord
         ; Map of keys to commands
         this.commands := Map()
 
+        ; Map of wildcard keys to commands
+        this.wildcards := Map()
+
         this.Sided := sided
         
         ; Check to make sure timeout is valid
@@ -220,7 +223,9 @@ class KeyChord
     **/
     Add(key, command)
     {
-        if IsObject(command) && (Type(command) == "KeyChord")
+        if (InStr(key, "*") || InStr(key, "?") || InStr(key, "-"))
+            this.wildcards.Set(key, command)
+        else if IsObject(command) && (Type(command) == "KeyChord")
             this.nestedChords.Set(key, command)
         else
             this.commands.Set(key, command)
@@ -303,6 +308,14 @@ class KeyChord
         }
         else
         {
+            for pattern, command in this.wildcards
+            {
+                if (this.MatchWildcard(pattern, this.key))
+                {
+                    this.ExecuteCommand(command, timeout)
+                    return
+                }
+            }
             MsgBox("Key not found: " this.key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" this.key "`", Run.Bind(`"notepad`"))", "Error")
         }
 
@@ -357,5 +370,49 @@ class KeyChord
             return Round(value, decimalPlaces)
         }
         return value
+    }
+
+    MatchWildcard(pattern, input)
+    {
+        if (pattern == input)
+            return true
+
+        ; Handle modifiers
+        modifiers := ""
+        if (RegExMatch(pattern, "^[!^+#]*"))
+        {
+            modifiers := RegExReplace(pattern, "^([!^+#]*)(.*)", "$1")
+            pattern := RegExReplace(pattern, "^([!^+#]*)(.*)", "$2")
+            input := RegExReplace(input, "^([!^+#]*)(.*)", "$2")
+        }
+
+        ; Escape special regex characters except * and ?
+        pattern := RegExReplace(pattern, "([\\.\^$+\[\]\(\)\{\}|])", "\$1")
+
+        if (InStr(pattern, "*"))
+        {
+            pattern := StrReplace(pattern, "*", ".*")
+            return (modifiers == "" or InStr(this.key, modifiers)) and RegExMatch(input, "^" . pattern . "$")
+        }
+
+        if (InStr(pattern, "?"))
+        {
+            pattern := StrReplace(pattern, "?", ".")
+            return (modifiers == "" or InStr(this.key, modifiers)) and RegExMatch(input, "^" . pattern . "$")
+        }
+
+        if (InStr(pattern, "-"))
+        {
+            parts := StrSplit(pattern, "-")
+            if (parts.Length == 2)
+            {
+                start := Ord(parts[1])
+                end := Ord(parts[2])
+                inputChar := Ord(input)
+                return (modifiers == "" or InStr(this.key, modifiers)) and (inputChar >= start && inputChar <= end)
+            }
+        }
+
+        return false
     }
 }
