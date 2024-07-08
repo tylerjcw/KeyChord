@@ -145,35 +145,21 @@ class KeyChord
         }
 
         modifiers := ""
-        if (this.Sided == False)
+        modKeys := this.Sided ? [
+            ["LCtrl" , "<^"], ["RCtrl" , ">^"],
+            ["LAlt"  , "<!"], ["RAlt"  , ">!"],
+            ["LShift", "<+"], ["RShift", ">+"],
+            ["LWin"  , "<#"], ["RWin"  , ">#"]
+        ] : [
+            ["LWin"  , "#" ], ["RWin"  , "#" ],
+            ["Ctrl"  , "^" ], ["Alt"   , "!" ],
+            ["Shift" , "+" ],
+        ]
+
+        for key in modKeys
         {
-            if (GetKeyState("Ctrl", "P"))
-                modifiers .= "^"
-            if (GetKeyState("Alt", "P"))
-                modifiers .= "!"
-            if (GetKeyState("Shift", "P"))
-                modifiers .= "+"
-            if (GetKeyState("LWin", "P") or GetKeyState("RWin", "P"))
-                modifiers .= "#"
-        }
-        else
-        {
-            if GetKeyState("LCtrl", "P")
-                modifiers .= "<^"
-            if GetKeyState("RCtrl", "P")
-                modifiers .= ">^"
-            if GetKeyState("LAlt", "P")
-                modifiers .= "<!"
-            if GetKeyState("RAlt", "P")
-                modifiers .= ">!"
-            if GetKeyState("LShift", "P")
-                modifiers .= "<+"
-            if GetKeyState("RShift", "P")
-                modifiers .= ">+"
-            if GetKeyState("LWin", "P")
-                modifiers .= "<#"
-            if GetKeyState("RWin", "P")
-                modifiers .= ">#"
+            if GetKeyState(key[1], "P")
+                modifiers .= key[2]
         }
 
         Suspend(False)
