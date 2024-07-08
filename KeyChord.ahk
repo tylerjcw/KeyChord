@@ -4,7 +4,7 @@
  *  A class for writing key chords in AutoHotKey.
  *  Now combinations like "Ctrl+Win+d, x, u" are supported!
  *  
- *  @version 1.32
+ *  @version 1.33
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://autohotkey.com/boards/viewtopic.php?f=83&t=131037
  *  @license
@@ -57,13 +57,23 @@
 **/
 class KeyChord
 {
-    __New(defaultTimeout := 3)
+    /**
+     *  @property {Boolean} Sided
+     *  Controls whether or not the side will be distinguished
+     *  on modifier keys. True will return LCtr, RAlt, etc.
+     *  False will return Ctrl, Alt, etc.
+    **/
+    Sided := False
+
+    __New(defaultTimeout := 3, sided := False)
     {
         ; Map of keys to nested KeyChord instances
         this.nestedChords := Map()
 
         ; Map of keys to commands
         this.commands := Map()
+
+        this.Sided := sided
         
         ; Check to make sure timeout is valid
         if !(defaultTimeout <= 0)
@@ -95,13 +105,26 @@ class KeyChord
     **/
     GetUserInput(timeout := 0)
     {
-        static specialKeys := (["CapsLock", "Space", "Backspace", "Delete", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Insert", "Tab", "Enter", "Esc",
-            "ScrollLock", "AppsKey", "PrintScreen", "CtrlBreak", "Pause", "Help", "Sleep", "Browser_Back", "Browser_Forward", "Browser_Refresh", "Browser_Stop", "Browser_Search",
-            "Browser_Favorites", "Browser_Home", "Volume_Mute", "Volume_Up", "Volume_Down", "Media_Next", "Media_Prev", "Media_Stop", "Media_Play_Pause", "Launch_Mail",
-            "Launch_Media", "Launch_App1", "Launch_App2", "NumpadDot", "NumpadDiv", "NumpadMult", "NumpadAdd", "NumpadSub", "NumpadEnter", "NumLock", "NumpadIns", "NumpadEnd",
-            "NumpadDown", "NumpadPgDn", "NumpadLeft", "NumpadClear", "NumpadRight", "NumpadHome", "NumpadUp", "NumpadPgUp", "NumpadDel", "Numpad0", "Numpad1", "Numpad2", "Numpad3",
-            "Numpad4", "Numpad5", "Numpad6", "Numpad7", "Numpad8", "Numpad9", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16",
-            "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24"])
+        Suspend(True)
+
+        static specialKeys := ([
+            "CapsLock"         , "Space"           , "Backspace"    , "Delete"         , "Up"                , "Down"         ,
+            "Left"             , "Right"           , "Home"         , "End"            , "PgUp"              , "PgDn"         ,
+            "Insert"           , "Tab"             , "Enter"        , "Esc"            , "ScrollLock"        , "AppsKey"      ,
+            "PrintScreen"      , "CtrlBreak"       , "Pause"        , "Help"           , "Sleep"             , "Browser_Back" ,
+            "Browser_Forward"  , "Browser_Refresh" , "Browser_Stop" , "Browser_Search" , "Browser_Favorites" , "Browser_Home" ,
+            "Volume_Mute"      , "Volume_Up"       , "Volume_Down"  , "Media_Next"     , "Media_Prev"        , "Media_Stop"   ,
+            "Media_Play_Pause" , "Launch_Mail"     , "Launch_Media" , "Launch_App1"    , "Launch_App2"       , "NumpadDot"    ,
+            "NumpadDiv"        , "NumpadMult"      , "NumpadAdd"    , "NumpadSub"      , "NumpadEnter"       , "NumLock"      ,
+            "NumpadIns"        , "NumpadEnd"       , "NumpadDown"   , "NumpadPgDn"     , "NumpadLeft"        , "NumpadClear"  ,
+            "NumpadRight"      , "NumpadHome"      , "NumpadUp"     , "NumpadPgUp"     , "NumpadDel"         , "Numpad0"      ,
+            "Numpad1"          , "Numpad2"         , "Numpad3"      , "Numpad4"        , "Numpad5"           , "Numpad6"      ,
+            "Numpad7"          , "Numpad8"         , "Numpad9"      , "F1"             , "F2"                , "F3"           ,
+            "F4"               , "F5"              , "F6"           , "F7"             , "F8"                , "F9"           ,
+            "F10"              , "F11"             , "F12"          , "F13"            , "F14"               , "F15"          ,
+            "F16"              , "F17"             , "F18"          , "F19"            , "F20"               , "F21"          ,
+            "F22"              , "F23"             , "F24"          ,
+        ])
 
         endKeys := ""
         for tempKey in specialKeys
@@ -122,24 +145,41 @@ class KeyChord
         }
 
         modifiers := ""
-        if (GetKeyState("Ctrl", "P"))
-            modifiers .= "^"
-        if (GetKeyState("Alt", "P"))
-            modifiers .= "!"
-        if (GetKeyState("Shift", "P"))
-            modifiers .= "+"
-        if (GetKeyState("LWin", "P") or GetKeyState("RWin", "P"))
-            modifiers .= "#"
-
-        ; Check if the EndKey matches any special key
-        for sKey in specialKeys
+        if (this.Sided == False)
         {
-            if (key.EndKey = "{" sKey "}")  ; Remove braces for comparison
-                return modifiers . key.EndKey
+            if (GetKeyState("Ctrl", "P"))
+                modifiers .= "^"
+            if (GetKeyState("Alt", "P"))
+                modifiers .= "!"
+            if (GetKeyState("Shift", "P"))
+                modifiers .= "+"
+            if (GetKeyState("LWin", "P") or GetKeyState("RWin", "P"))
+                modifiers .= "#"
+        }
+        else
+        {
+            if GetKeyState("LCtrl", "P")
+                modifiers .= "<^"
+            if GetKeyState("RCtrl", "P")
+                modifiers .= ">^"
+            if GetKeyState("LAlt", "P")
+                modifiers .= "<!"
+            if GetKeyState("RAlt", "P")
+                modifiers .= ">!"
+            if GetKeyState("LShift", "P")
+                modifiers .= "<+"
+            if GetKeyState("RShift", "P")
+                modifiers .= ">+"
+            if GetKeyState("LWin", "P")
+                modifiers .= "<#"
+            if GetKeyState("RWin", "P")
+                modifiers .= ">#"
         }
 
+        Suspend(False)
+
         ; If not a special key, return the input (with case consideration)
-        input := key.Input ? key.Input : key.EndKey
+        input := (key.Input ? key.Input : key.EndKey)
         return modifiers . input
     }
 
@@ -174,9 +214,9 @@ class KeyChord
      *  
      *  @return {KeyChord} A new KeyChord instance.
     **/ 
-    static CreateFromMap(timeout, bindingsMap)
+    static CreateFromMap(timeout, bindingsMap, sided := False)
     {
-        this.keyChord := KeyChord(timeout)
+        this.keyChord := KeyChord(timeout, sided)
 
         for key, action in bindingsMap
         {
@@ -255,10 +295,7 @@ class KeyChord
         }
 
         ToolTip("Press a key...`n" keyString)
-
-        Suspend(True)
         this.key := this.GetUserInput(timeout)
-        Suspend(False)
 
         ToolTip(this.key)
         SetTimer () => ToolTip(), -1000
