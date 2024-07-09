@@ -81,6 +81,26 @@ class KeyChord
         {
             this.Command   := command
             this.Condition := condition
+
+            allowedCommands   := ["KeyChord", "String", "Integer", "Float", "Number", "Func", "BoundFunc", "Closure", "Enumerator"]
+            allowedConditions := ["String", "Integer", "Float", "Number", "Func", "BoundFunc", "Closure", "Enumerator"]
+
+            commandOK := False
+            conditionOK := False
+
+            for cmdType in allowedCommands
+                if Type(this.Command) == cmdType
+                    commandOK := True
+
+            for conditionType in allowedConditions
+                if Type(this.Condition) == conditionType
+                    conditionOK := True
+
+            if !commandOK
+                throw ValueError("Command must be or evaluate to a KeyChord, String, Integer, Boolean, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, "Command: " Type(this.Command))
+
+            if !conditionOK
+                throw ValueError("Condition must be or evaluate to a String, Integer, Boolean, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, "Condition: " Type(this.Condition))
         }
 
         /**
@@ -93,7 +113,6 @@ class KeyChord
          */
         Execute(timeout)
         {
-
             /**
              * Evaluates a condition value and returns a boolean result.
              * 
@@ -112,17 +131,15 @@ class KeyChord
                 switch Type(value)
                 {
                     case "Boolean":
-                        return (value) ? True : False
+                        return ((value) ? True : False)
                     case "String":
-                        return (value != "") ? True : False
+                        return ((value != "") ? True : False)
                     case "Integer", "Float", "Number":
-                        return (value > 0) ? True : False
+                        return ((value != 0) ? True : False)
                     case "Func", "BoundFunc", "Closure", "Enumerator":
-                        value := value.Call()
-                        EvaluateCondition(value)
-                        return
+                        return EvaluateCondition(value.Call())
                     default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
-                        throw ValueError("Condition must be a Boolean, String, Integer, Float, Number, Func, BoundFunc, Closure, or Enumerator", -1, Type(value))
+                        throw ValueError("Condition must be or evaluate to a Boolean, String, Integer, Float, Number, Func, BoundFunc, Closure, or Enumerator", -1, "Condition: " Type(value))
                     
                     return unset ; This should never get reached
                 }
@@ -146,7 +163,7 @@ class KeyChord
                         this.Command.Call()
                         return
                     Default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
-                        throw ValueError("Command must be a KeyChord, String, Integer, Boolean, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, Type(this.Command))
+                        throw ValueError("Command must be a KeyChord, String, Integer, Boolean, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, "Command: " Type(this.Command))
 
                     return unset ; This should never get reached
                 }
@@ -300,6 +317,9 @@ class KeyChord
     **/ 
     static CreateFromMap(timeout, bindingsMap)
     {
+        if (timeout <= 0)
+            throw ValueError("Timeout must be greater than 0", -1, Type(timeout) ": " timeout)
+
         this.keyChord := KeyChord(timeout)
 
         for key, action in bindingsMap
