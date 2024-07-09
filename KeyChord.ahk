@@ -4,7 +4,7 @@
  *  A class for writing key chords in AutoHotKey.
  *  Now combinations like "Ctrl+Win+d, x, u" are supported!
  *  
- *  @version 1.33
+ *  @version 1.34
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://autohotkey.com/boards/viewtopic.php?f=83&t=131037
  *  @license
@@ -57,26 +57,75 @@
 **/
 class KeyChord
 {
-    /**
-     *  @property {Boolean} Sided
-     *  Controls whether or not the side will be distinguished
-     *  on modifier keys. True will return LCtr, RAlt, etc.
-     *  False will return Ctrl, Alt, etc.
-    **/
-    Sided := False
+    class Action
+    {
+        __New(command, condition := True)
+        {
+            this.Command   := command
+            this.Condition := condition
+        }
 
-    __New(defaultTimeout := 3, sided := False)
+        Execute(timeout)
+        {
+            EvaluateCondition(value)
+            {
+                ;MsgBox("In EvaluateCondition()`n" Type(value))
+                switch Type(value)
+                {
+                    case "Boolean":
+                        return value
+                    case "String":
+                        return (value != "") ? True : False
+                    case "Integer", "Float":
+                        return (value > 0) ? True : False
+                    case "Func", "BoundFunc":
+                        value := value.Call()
+                        EvaluateCondition(value)
+                    
+                    return value
+                }
+            }
+
+            this.Condition := EvaluateCondition(this.Condition)
+
+            if this.Condition
+            {
+                switch Type(this.Command)
+                {
+                    Case "String", "Integer", "Boolean":
+                        Send(this.Command)
+                        return
+                    Case "Float":
+                        Send(KeyChord.RoundToDecimalPlaces(this.Command))
+                        return
+                    Case "KeyChord":
+                        this.Command.Execute(timeout)
+                        return
+                    Case "Func", "BoundFunc", "Closure":
+                        this.Command.Call()
+                        return
+                    Case "Object":
+                        ;this.ExecuteCommand(this.Command, timeout)
+                        MsgBox("Command is of type: " Type(this.Command))
+                        return
+                    Default:
+                        MsgBox("Invalid Key Chord type: " Type(this.Command), "Error")
+                        return
+                }
+            }
+        }
+    }
+
+    __New(defaultTimeout := 3)
     {
         ; Map of keys to nested KeyChord instances
         this.nestedChords := Map()
 
         ; Map of keys to commands
-        this.commands := Map()
+        this.chords := Map()
 
         ; Map of wildcard keys to commands
         this.wildcards := Map()
-
-        this.Sided := sided
         
         ; Check to make sure timeout is valid
         if !(defaultTimeout <= 0)
@@ -148,16 +197,11 @@ class KeyChord
         }
 
         modifiers := ""
-        modKeys := this.Sided ? [
+        modKeys := [
             ["LCtrl" , "<^"], ["RCtrl" , ">^"],
             ["LAlt"  , "<!"], ["RAlt"  , ">!"],
             ["LShift", "<+"], ["RShift", ">+"],
-            ["LWin"  , "<#"], ["RWin"  , ">#"]
-        ] : [
-            ["LWin"  , "#" ], ["RWin"  , "#" ],
-            ["Ctrl"  , "^" ], ["Alt"   , "!" ],
-            ["Shift" , "+" ],
-        ]
+            ["LWin"  , "<#"], ["RWin"  , ">#"]]
 
         for key in modKeys
         {
@@ -203,22 +247,19 @@ class KeyChord
      *  
      *  @return {KeyChord} A new KeyChord instance.
     **/ 
-    static CreateFromMap(timeout, bindingsMap, sided := False)
+    static CreateFromMap(timeout, bindingsMap)
     {
-        this.keyChord := KeyChord(timeout, sided)
+        this.keyChord := KeyChord(timeout)
 
         for key, action in bindingsMap
         {
-            if IsObject(action) && (action.HasOwnProp("command"))
-            {
-                command := action.command
-                condition := action.HasOwnProp("condition")? action.condition : ""
-                this.keyChord.Add(key, command, condition)
-            }
-            else
-            {
+            if action is KeyChord.Action
                 this.keyChord.Add(key, action)
-            }
+            else if IsObject(action) && action.HasOwnProp("Command")
+                this.keyChord.Add(key, KeyChord.Action(action.Command,
+                    action.HasOwnProp("Condition") ? action.Condition : True))
+            else
+                this.keyChord.Add(key, KeyChord.Action(action))
         }
 
         return this.keyChord
@@ -230,14 +271,17 @@ class KeyChord
      *  @param {String|Integer|Float|BoundFunc|KeyChord} command - The command or nested key Chord to map
      *  @returns {Void}
     **/
-    Add(key, command, condition := "")
+    Add(key, action)
     {
+        if !(action is KeyChord.Action)
+            action := KeyChord.Action(action)
+
         if (InStr(key, "*") || InStr(key, "?") || InStr(key, "-"))
-            this.wildcards.Set(key, {command: command, condition: condition})
-        else if IsObject(command) && (Type(command) == "KeyChord")
-            this.nestedChords.Set(key, {command: command, condition: condition})
+            this.wildcards.Set(key, action)
+        else if IsObject(action.Command) && (Type(action.Command) == "KeyChord")
+            this.nestedChords.Set(key, action)
         else
-            this.commands.Set(key, {command: command, condition: condition})
+            this.chords.Set(key, action)
     }
 
     /**
@@ -247,10 +291,12 @@ class KeyChord
     **/
     Remove(key)
     {
-        if this.commands.Has(key)
-            this.commands.Delete(key)
+        if this.chords.Has(key)
+            this.chords.Delete(key)
         else if this.nestedChords.Has(key)
             this.nestedChords.Delete(key)
+        else if this.wildcards.Has(key)
+            this.wildcards.Delete(key)
         else
             MsgBox("Key not found: " key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" key "`", Run.Bind(`"notepad`"))", "Error")
     }
@@ -261,12 +307,17 @@ class KeyChord
      *  @param {String|Integer|Float|BoundFunc|KeyChord} newCommand - The new command or nested key Chord.
      *  @returns {Void}
     **/
-    Update(key, newCommand)
+    Update(key, newAction)
     {
-        if this.commands.Has(key)
-            this.commands.Set(key, newCommand)
+        if !(newAction is KeyChord.Action)
+            newAction := KeyChord.Action(newAction)
+
+        if this.chords.Has(key)
+            this.chords.Set(key, newAction)
         else if this.nestedChords.Has(key)
-            this.nestedChords.Set(key, newCommand)
+            this.nestedChords.Set(key, newAction)
+        else if this.wildcards.Has(key)
+            this.wildcards.Set(key, newAction)
         else
             MsgBox("Key not found: " key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" key "`", Run.Bind(`"notepad`"))", "Error")
     }
@@ -277,7 +328,7 @@ class KeyChord
     **/
     Clear()
     {
-        this.commands.Clear()
+        this.chords.Clear()
         this.nestedChords.Clear()
     }
 
@@ -289,89 +340,55 @@ class KeyChord
     Execute(timeout := this.defaultTimeout)
     {
         keyString := ""
-        for key in this.commands
+        for key in this.chords
         {
-            keyString := key ", " keyString
+            if (A_Index > 1)
+                keyString .= ", "
+            keyString .= key
         }
 
         ToolTip("Press a key...`n" keyString)
         this.key := this.GetUserInput(timeout)
-
-        ToolTip(this.key)
-        SetTimer () => ToolTip(), -1000
+        TimedToolTip(this.key, 1)
 
         if (this.key == "")
         {
-            ToolTip("Error: No input received.")
-            SetTimer () => ToolTip(), -1000
-        }
-        else if this.commands.Has(this.key)
-        {
-            commandChord := this.commands.Get(this.key)
-            if (commandChord.condition == "" || (Type(commandChord.condition) == "Func" && commandChord.condition.Call()))
-                this.ExecuteCommand(commandChord.command, timeout)
-        }
-        else if this.nestedChords.Has(this.key)
-        {
-            nestedChord := this.nestedChords.Get(this.key)
-            if (nestedChord.condition == "" || (Type(nestedChord.condition) == "Func" && nestedChord.condition.Call()))
-                nestedChord.command.Execute(timeout)
+            TimedToolTip("Error: No input received.", 1)
         }
         else
         {
-            for pattern, commandChord in this.wildcards
+            unsidedKey := RegExReplace(this.key, "(<|>)*", "")
+
+            if this.chords.Has(this.key) || this.chords.Has(unsidedKey)
             {
-                if (this.MatchWildcard(pattern, this.key))
+                action := this.chords.Get(this.key)
+                action.Execute(timeout)
+                return
+            }
+            else if this.nestedChords.Has(this.key) || this.nestedChords.Has(unsidedKey)
+            {
+                action := this.nestedChords.Get(this.key)
+                action.Execute(timeout)
+                return
+            }
+            else
+            {
+                for pattern, action in this.wildcards
                 {
-                    if (commandChord.condition == "" || ((Type(commandChord.condition) == "Func" || Type(commandChord.condition) == "BoundFunc") && commandChord.condition.Call()))
+                    if (this.MatchWildcard(pattern, this.key) || this.MatchWildcard(pattern, unsidedKey))
                     {
-                        this.ExecuteCommand(commandChord.command, timeout, this.key)
+                        action.Execute(timeout)
                         return
                     }
                 }
             }
+
             TimedToolTip("Key not found: " this.key, 5)
+            ;MsgBox("Key not found: " this.key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" this.key "`", Run.Bind(`"notepad`"))", "Error")
+            ;A_Clipboard := this.key
         }
 
         return
-    }
-
-    /**
-     *  Execute the given command based on its type.
-     *  @param {BoundFunc|Boolean|Integer|String|Float|KeyChord} command The "command" to execute
-     *  @param {Integer} timeout The timeout (in seconds) for user input
-     *  @returns {Void}
-    **/
-    ExecuteCommand(command, timeout, key := "")
-    {
-        cmdType := Type(command)
-
-        Switch cmdType
-        {
-            Case "String", "Integer", "Boolean":
-                Send(command)
-                return
-            Case "Float":
-                Send(this.RoundToDecimalPlaces(command))
-                return
-            Case "KeyChord":
-                command.Execute(timeout)
-                return
-            Case "Func", "BoundFunc", "Closure":
-                if (key := "")
-                    command.Call(key)
-                else
-                    command.Call()
-                return
-            Case "Object":
-                if command.HasOwnProp("command")
-                    this.ExecuteCommand(command.command)
-                else
-                    MsgBox("Invalid Key Chord object: Missing 'command' property", "Error")
-            Default:
-                MsgBox("Invalid Key Chord type: " cmdType, "Error")
-                return
-        }
     }
 
     /**
@@ -419,27 +436,24 @@ class KeyChord
             return true
 
         ; Handle modifiers
-        modifiers := ""
-        if (RegExMatch(pattern, "^[!^+#]*"))
+        patternModifiers := ""
+        inputModifiers := ""
+        if (RegExMatch(pattern, "^[!^+#<>]*"))
         {
-            modifiers := RegExReplace(pattern, "^([!^+#]*)(.*)", "$1")
-            pattern := RegExReplace(pattern, "^([!^+#]*)(.*)", "$2")
-            input := RegExReplace(input, "^([!^+#]*)(.*)", "$2")
+            patternModifiers := RegExReplace(pattern, "^([!^+#<>]*)(.*)", "$1")
+            pattern := RegExReplace(pattern, "^([!^+#<>]*)(.*)", "$2")
+            inputModifiers := RegExReplace(input, "^([!^+#<>]*)(.*)", "$1")
+            input := RegExReplace(input, "^([!^+#<>]*)(.*)", "$2")
         }
 
         ; Escape special regex characters except * and ?
         pattern := RegExReplace(pattern, "([\\.\^$+\[\]\(\)\{\}|])", "\$1")
 
-        if (InStr(pattern, "*"))
+        if (InStr(pattern, "*") || InStr(pattern, "?"))
         {
             pattern := StrReplace(pattern, "*", ".*")
-            return (modifiers == "" or InStr(this.key, modifiers)) and RegExMatch(input, "^" . pattern . "$")
-        }
-
-        if (InStr(pattern, "?"))
-        {
             pattern := StrReplace(pattern, "?", ".")
-            return (modifiers == "" or InStr(this.key, modifiers)) and RegExMatch(input, "^" . pattern . "$")
+            return this.MatchModifiers(patternModifiers, inputModifiers) && RegExMatch(input, "^" . pattern . "$")
         }
 
         if (InStr(pattern, "-"))
@@ -450,10 +464,26 @@ class KeyChord
                 start := Ord(parts[1])
                 end := Ord(parts[2])
                 inputChar := Ord(input)
-                return (modifiers == "" or InStr(this.key, modifiers)) and (inputChar >= start && inputChar <= end)
+                return this.MatchModifiers(patternModifiers, inputModifiers) && (inputChar >= start && inputChar <= end)
             }
         }
 
         return false
+    }
+
+    MatchModifiers(patternMods, inputMods)
+    {
+        ; If pattern has no sided modifiers, ignore sides in input
+        if (!RegExMatch(patternMods, "[<>]"))
+        {
+            patternMods := RegExReplace(patternMods, "[<>]", "")
+            inputMods := RegExReplace(inputMods, "[<>]", "")
+        }
+
+        ; Sort modifiers to ensure consistent order
+        patternMods := Sort(patternMods)
+        inputMods := Sort(inputMods)
+
+        return (patternMods == inputMods)
     }
 }
