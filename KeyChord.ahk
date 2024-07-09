@@ -47,8 +47,9 @@
  *  
  *  @class KeyChord
  *  @constructor `KeyChord(defaultTimeout := 3)`
- *  @property {Map} commands Map of keys to commands.
+ *  @property {Map} chords Map of keys to commands.
  *  @property {Map} nestedChords Map of keys to nested KeyChord instances.
+ *  @property {Map} wildcards Map of wildcard keys to commands.
  *  @property {Integer} defaultTimeout The default timeout (in seconds) for user input.
  *  @method `Add(key)`: `Void` Adds a new command or key chord.
  *  @method `Delete(key)`: `Void` Deletes a command or key chord.
@@ -57,65 +58,107 @@
 **/
 class KeyChord
 {
+    /**
+     * Represents an action that can be executed as part of a KeyChord.
+     * 
+     * An Action encapsulates a command and an optional condition that must be met in order to execute the command.
+     * 
+     * @class Action
+     * @constructor `Action(command, condition := True)`
+     * @property {Any} Command The command to be executed when the Action is executed.
+     * @property {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} Condition The condition that must be met in order to execute the command. Defaults to `True`.
+     * @method `Execute()`: `Void` Executes the command if the condition is met.
+     */
     class Action
     {
+        /**
+         * Initializes a new instance of the `Action` class.
+         *
+         * @param {Any} command The command to be executed when the Action is executed.
+         * @param {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} [condition=True] The condition that must be met in order to execute the command.
+         */
         __New(command, condition := True)
         {
             this.Command   := command
             this.Condition := condition
         }
 
+        /**
+         * Executes the action.
+         * 
+         * This method is responsible for evaluationg the condition of and thusly executing the command or nested key chord of a KeyChord.Action
+         * 
+         * @param {Integer} [timeout=this.defaultTimeout (3)] The timeout (in seconds) for user input. If not provided, the default timeout is used.
+         * @returns {Void}
+         */
         Execute(timeout)
         {
+
+            /**
+             * Evaluates a condition value and returns a boolean result.
+             * 
+             * Supports evaluating conditions of type Boolean, String, Integer, Float, Number, Func, BoundFunc, Closure, and Enumerator.
+             * For Booleans, returns the value as-is.
+             * For Strings, returns True if the string is not empty, False otherwise.
+             * For Integers, Floats, and Numbers, returns True if the value is greater than 0, False otherwise.
+             * For Funcs, BoundFuncs, Closures, and Enumerators, calls the value and recursively evaluates the result.
+             * Throws a ValueError if the condition value is of an unsupported type.
+             * 
+             * @param {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} value The condition value to evaluate.
+             * @returns {Boolean} The evaluated boolean result of the condition.
+             */
             EvaluateCondition(value)
             {
-                ;MsgBox("In EvaluateCondition()`n" Type(value))
                 switch Type(value)
                 {
                     case "Boolean":
-                        return value
+                        return (value) ? True : False
                     case "String":
                         return (value != "") ? True : False
-                    case "Integer", "Float":
+                    case "Integer", "Float", "Number":
                         return (value > 0) ? True : False
-                    case "Func", "BoundFunc":
+                    case "Func", "BoundFunc", "Closure", "Enumerator":
                         value := value.Call()
                         EvaluateCondition(value)
+                        return
+                    default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
+                        throw ValueError("Condition must be a Boolean, String, Integer, Float, Number, Func, BoundFunc, Closure, or Enumerator", -1, Type(value))
                     
-                    return value
+                    return unset ; This should never get reached
                 }
             }
 
-            this.Condition := EvaluateCondition(this.Condition)
-
-            if this.Condition
+            ; Check if this.Condition evaluates to true, if so, execute this.Command in the proper manner for it's type
+            if EvaluateCondition(this.Condition)
             {
                 switch Type(this.Command)
                 {
-                    Case "String", "Integer", "Boolean":
-                        Send(this.Command)
+                    Case "KeyChord":
+                        this.Command.Execute(timeout)
                         return
                     Case "Float":
                         Send(KeyChord.RoundToDecimalPlaces(this.Command))
                         return
-                    Case "KeyChord":
-                        this.Command.Execute(timeout)
+                    Case "String", "Integer", "Boolean", "Number":
+                        Send(this.Command)
                         return
-                    Case "Func", "BoundFunc", "Closure":
+                    Case "Func", "BoundFunc", "Closure", "Enumerator":
                         this.Command.Call()
                         return
-                    Case "Object":
-                        ;this.ExecuteCommand(this.Command, timeout)
-                        MsgBox("Command is of type: " Type(this.Command))
-                        return
-                    Default:
-                        MsgBox("Invalid Key Chord type: " Type(this.Command), "Error")
-                        return
+                    Default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
+                        throw ValueError("Command must be a KeyChord, String, Integer, Boolean, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, Type(this.Command))
+
+                    return unset ; This should never get reached
                 }
             }
         }
     }
 
+    /**
+     * Initializes a new instance of the KeyChord class with the specified default timeout.
+     *
+     * @param {Integer} defaultTimeout The default timeout in seconds for key chord input. Must be greater than 0.
+     */
     __New(defaultTimeout := 3)
     {
         ; Map of keys to nested KeyChord instances
@@ -128,10 +171,10 @@ class KeyChord
         this.wildcards := Map()
         
         ; Check to make sure timeout is valid
-        if !(defaultTimeout <= 0)
+        if (defaultTimeout > 0)
             this.defaultTimeout := defaultTimeout
         else
-            MsgBox("Invalid timeout value: " defaultTimeout "`nTimeout must be greater than 0.", "Error")
+            throw ValueError("Timeout must be greater than 0", -1, Type(defaultTimeout) ": " defaultTimeout)
     }
 
     /**
@@ -157,9 +200,12 @@ class KeyChord
     **/
     GetUserInput(timeout := 0)
     {
-        Suspend(True)
+        if (timeout <= 0)
+            throw ValueError("Timeout must be greater than 0", -1, Type(timeout) ": " timeout)
 
-        static specialKeys := ([
+        Suspend(True) ; Suspend the user's hotkeys, to avoid interference
+
+        static specialKeys := ([ ; Make sure all special keys are handled
             "CapsLock"         , "Space"           , "Backspace"    , "Delete"         , "Up"                , "Down"         ,
             "Left"             , "Right"           , "Home"         , "End"            , "PgUp"              , "PgDn"         ,
             "Insert"           , "Tab"             , "Enter"        , "Esc"            , "ScrollLock"        , "AppsKey"      ,
@@ -185,17 +231,20 @@ class KeyChord
             endKeys .= tempKey
         }
 
-        key := InputHook("L1 T" timeout, endKeys)
+        key := InputHook("L1 T" timeout, endKeys) ; Create a one character input hook, with the timeout and endKeys passed by the user
         key.KeyOpt("{All}", "S")  ; Suppress all keys
-        key.KeyOpt("{LCtrl}{RCtrl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}", "N")  ; Allow detection of modifiers
+        key.KeyOpt("{LCtrl}{RCtrl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}", "N") ; Allow detection of modifiers by causing OnKeyUp and OnKeyDown to be called
         key.Start()
 
+        ; Check to see if the user pressed any keys
         if !key.Wait()
         {
             MsgBox("Input timed out or failed.`nTimeout: " timeout, "Error")
             Return ""
         }
 
+        ; We only need to worry about these 8 modifiers, since the "sided" vs "non-sided"
+        ; key strings are detected and handled in the KeyChord.Execute() function.
         modifiers := ""
         modKeys := [
             ["LCtrl" , "<^"], ["RCtrl" , ">^"],
@@ -203,15 +252,17 @@ class KeyChord
             ["LShift", "<+"], ["RShift", ">+"],
             ["LWin"  , "<#"], ["RWin"  , ">#"]]
 
+        ; Check to see if any of the modifiers are pressed,
+        ; if they are, add them to the modifiers string.
         for key in modKeys
         {
             if GetKeyState(key[1], "P")
                 modifiers .= key[2]
         }
 
-        Suspend(False)
+        Suspend(False) ; Resume the user's hotkeys
 
-        ; If not a special key, return the input (with case consideration)
+        ; If not a special key, return the input, plus modifiers
         input := (key.Input ? key.Input : key.EndKey)
         return modifiers . input
     }
@@ -384,8 +435,6 @@ class KeyChord
             }
 
             TimedToolTip("Key not found: " this.key, 5)
-            ;MsgBox("Key not found: " this.key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" this.key "`", Run.Bind(`"notepad`"))", "Error")
-            ;A_Clipboard := this.key
         }
 
         return
@@ -426,9 +475,9 @@ class KeyChord
 
     /**
      *  Match the given input string against the given wildcard pattern.
-     *  @param pattern {String} The wildcard pattern to match against.
-     *  @param input {String} The input string to match against the pattern.
-     *  @returns {Integer | Number} 
+     *  @param {String} pattern The wildcard pattern to match against.
+     *  @param {String} input The input string to match against the pattern.
+     *  @returns {Boolean} True if the input string matches the pattern, false otherwise.
     **/
     MatchWildcard(pattern, input)
     {
@@ -471,6 +520,12 @@ class KeyChord
         return false
     }
 
+    /**
+     * Compares the pattern modifiers and input modifiers to ensure they match.
+     * @param {String} patternMods The modifiers from the pattern.
+     * @param {String} inputMods The modifiers from the input.
+     * @returns {Boolean} True if the modifiers match, false otherwise.
+     */
     MatchModifiers(patternMods, inputMods)
     {
         ; If pattern has no sided modifiers, ignore sides in input
