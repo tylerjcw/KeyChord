@@ -209,7 +209,16 @@ class KeyChord
 
         for key, action in bindingsMap
         {
-            this.keyChord.Add(key, action)
+            if IsObject(action) && (action.HasOwnProp("command"))
+            {
+                command := action.command
+                condition := action.HasOwnProp("condition")? action.condition : ""
+                this.keyChord.Add(key, command, condition)
+            }
+            else
+            {
+                this.keyChord.Add(key, action)
+            }
         }
 
         return this.keyChord
@@ -221,14 +230,14 @@ class KeyChord
      *  @param {String|Integer|Float|BoundFunc|KeyChord} command - The command or nested key Chord to map
      *  @returns {Void}
     **/
-    Add(key, command)
+    Add(key, command, condition := "")
     {
         if (InStr(key, "*") || InStr(key, "?") || InStr(key, "-"))
-            this.wildcards.Set(key, command)
+            this.wildcards.Set(key, {command: command, condition: condition})
         else if IsObject(command) && (Type(command) == "KeyChord")
-            this.nestedChords.Set(key, command)
+            this.nestedChords.Set(key, {command: command, condition: condition})
         else
-            this.commands.Set(key, command)
+            this.commands.Set(key, {command: command, condition: condition})
     }
 
     /**
@@ -298,25 +307,30 @@ class KeyChord
         }
         else if this.commands.Has(this.key)
         {
-            this.command := this.commands.Get(this.key)
-            this.ExecuteCommand(this.command, timeout)
+            commandChord := this.commands.Get(this.key)
+            if (commandChord.condition == "" || (Type(commandChord.condition) == "Func" && commandChord.condition.Call()))
+                this.ExecuteCommand(commandChord.command, timeout)
         }
         else if this.nestedChords.Has(this.key)
         {
-            this.nestedChord := this.nestedChords.Get(this.key)
-            this.nestedChord.Execute(timeout)
+            nestedChord := this.nestedChords.Get(this.key)
+            if (nestedChord.condition == "" || (Type(nestedChord.condition) == "Func" && nestedChord.condition.Call()))
+                nestedChord.command.Execute(timeout)
         }
         else
         {
-            for pattern, command in this.wildcards
+            for pattern, commandChord in this.wildcards
             {
                 if (this.MatchWildcard(pattern, this.key))
                 {
-                    this.ExecuteCommand(command, timeout)
-                    return
+                    if (commandChord.condition == "" || ((Type(commandChord.condition) == "Func" || Type(commandChord.condition) == "BoundFunc") && commandChord.condition.Call()))
+                    {
+                        this.ExecuteCommand(commandChord.command, timeout, this.key)
+                        return
+                    }
                 }
             }
-            MsgBox("Key not found: " this.key "`n`nPlease make sure the key is mapped correctly.`n`nExample:`nexampleKeyChord.Add(`"" this.key "`", Run.Bind(`"notepad`"))", "Error")
+            TimedToolTip("Key not found: " this.key, 5)
         }
 
         return
@@ -328,7 +342,7 @@ class KeyChord
      *  @param {Integer} timeout The timeout (in seconds) for user input
      *  @returns {Void}
     **/
-    ExecuteCommand(command, timeout)
+    ExecuteCommand(command, timeout, key := "")
     {
         cmdType := Type(command)
 
@@ -343,9 +357,17 @@ class KeyChord
             Case "KeyChord":
                 command.Execute(timeout)
                 return
-            Case "BoundFunc":
-                command.Call()
+            Case "Func", "BoundFunc", "Closure":
+                if (key := "")
+                    command.Call(key)
+                else
+                    command.Call()
                 return
+            Case "Object":
+                if command.HasOwnProp("command")
+                    this.ExecuteCommand(command.command)
+                else
+                    MsgBox("Invalid Key Chord object: Missing 'command' property", "Error")
             Default:
                 MsgBox("Invalid Key Chord type: " cmdType, "Error")
                 return
@@ -372,6 +394,25 @@ class KeyChord
         return value
     }
 
+    /**
+     *  Displays a tooltip for a user-defined amount of seconds
+     *  @param text {String} The text to display in the tooltip.
+     *  @param {Integer} duration The duration (in seconds) of the tooltip.
+    **/
+    TimedToolTip(text, duration := 3)
+    {
+        duration := 1000 * duration
+
+        ToolTip(text)
+        SetTimer () => ToolTip(), -(duration)
+    }
+
+    /**
+     *  Match the given input string against the given wildcard pattern.
+     *  @param pattern {String} The wildcard pattern to match against.
+     *  @param input {String} The input string to match against the pattern.
+     *  @returns {Integer | Number} 
+    **/
     MatchWildcard(pattern, input)
     {
         if (pattern == input)
