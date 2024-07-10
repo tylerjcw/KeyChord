@@ -215,7 +215,7 @@ class KeyChord
      *  
      *  @return {String} The user's input key strokes.
     **/
-    GetUserInput(timeout := 0)
+    static GetUserInput(timeout := 0)
     {
         if (timeout <= 0)
             throw ValueError("Timeout must be greater than 0", -1, Type(timeout) ": " timeout)
@@ -419,12 +419,12 @@ class KeyChord
         }
 
         ToolTip("Press a key...`n" keyString)
-        this.key := this.GetUserInput(timeout)
-        TimedToolTip(this.key, 1)
+        this.key := KeyChord.GetUserInput(timeout)
+        KeyChord.TimedToolTip(this.key, 1)
 
         if (this.key == "")
         {
-            TimedToolTip("Error: No input received.", 1)
+            KeyChord.TimedToolTip("Error: No input received.", 1)
         }
         else
         {
@@ -446,7 +446,7 @@ class KeyChord
             {
                 for pattern, action in this.wildcards
                 {
-                    if (this.MatchWildcard(pattern, this.key) || this.MatchWildcard(pattern, unsidedKey))
+                    if (KeyChord.MatchWildcard(pattern, this.key) || KeyChord.MatchWildcard(pattern, unsidedKey))
                     {
                         action.Execute(timeout)
                         return
@@ -454,7 +454,7 @@ class KeyChord
                 }
             }
 
-            TimedToolTip("Key not found: " this.key, 5)
+            KeyChord.TimedToolTip("Key not found: " this.key, 5)
         }
 
         return
@@ -468,7 +468,7 @@ class KeyChord
      *  @param {Float} value The float value to round.
      *  @returns {Float} The rounded float value.
     **/
-    RoundToDecimalPlaces(value)
+    static RoundToDecimalPlaces(value)
     {
         strValue := Format("{:f}", value)
         decimalPos := InStr(strValue, ".")
@@ -485,7 +485,7 @@ class KeyChord
      *  @param text {String} The text to display in the tooltip.
      *  @param {Integer} duration The duration (in seconds) of the tooltip.
     **/
-    TimedToolTip(text, duration := 3)
+    static TimedToolTip(text, duration := 3)
     {
         duration := 1000 * duration
 
@@ -499,7 +499,7 @@ class KeyChord
      *  @param {String} input The input string to match against the pattern.
      *  @returns {Boolean} True if the input string matches the pattern, false otherwise.
     **/
-    MatchWildcard(pattern, input)
+    static MatchWildcard(pattern, input)
     {
         if (pattern == input)
             return true
@@ -522,7 +522,7 @@ class KeyChord
         {
             pattern := StrReplace(pattern, "*", ".*")
             pattern := StrReplace(pattern, "?", ".")
-            return this.MatchModifiers(patternModifiers, inputModifiers) && RegExMatch(input, "^" . pattern . "$")
+            return KeyChord.MatchModifiers(patternModifiers, inputModifiers) && RegExMatch(input, "^" . pattern . "$")
         }
 
         if (InStr(pattern, "-"))
@@ -533,7 +533,7 @@ class KeyChord
                 start := Ord(parts[1])
                 end := Ord(parts[2])
                 inputChar := Ord(input)
-                return this.MatchModifiers(patternModifiers, inputModifiers) && (inputChar >= start && inputChar <= end)
+                return KeyChord.MatchModifiers(patternModifiers, inputModifiers) && (inputChar >= start && inputChar <= end)
             }
         }
 
@@ -546,7 +546,7 @@ class KeyChord
      * @param {String} inputMods The modifiers from the input.
      * @returns {Boolean} True if the modifiers match, false otherwise.
      */
-    MatchModifiers(patternMods, inputMods)
+    static MatchModifiers(patternMods, inputMods)
     {
         ; If pattern has no sided modifiers, ignore sides in input
         if (!RegExMatch(patternMods, "[<>]"))
