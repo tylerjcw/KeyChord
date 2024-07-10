@@ -9,25 +9,20 @@
     - [Constructor](#constructor)
     - [Properties](#properties)
     - [Methods](#methods)
-      - [a) Add(key, action)](#a-addkey-action)
-      - [b) Remove(key)](#b-removekey)
-      - [c) Update(key, newAction)](#c-updatekey-newaction)
-      - [d) Clear()](#d-clear)
+      - [a) Set(key, action)](#a-addkey-action)
       - [e) Execute(timeout := this.defaultTimeout)](#e-executetimeout--thisdefaulttimeout)
-      - [f) static CreateFromMap(timeout, bindingsMap)](#f-static-createfrommaptimeout-bindingsmap)
   - [2. KeyChord.Action Class](#2-keychordaction-class)
     - [Constructor](#constructor-1)
     - [Properties](#properties-1)
     - [Method](#method)
 - [Instructions](#instructions)
-    - [Creating a KeyChord instance](#creating-a-keychord-instance)
     - [Adding key-command mappings](#adding-key-command-mappings)
     - [Executing a KeyChord](#executing-a-keychord)
     - [Advanced Declaration Syntax](#advanced-declaration-syntax)
 - [Usage Examples](#usage-examples)
   - [1. Basic KeyChord usage](#1-basic-keychord-usage)
   - [2. Nested KeyChords](#2-nested-keychords)
-  - [3. Using CreateFromMap](#3-using-createfrommap)
+  - [3. Using default constructor](#3-using-default-constructor)
   - [4. Using conditions with KeyChord.Action](#4-using-conditions-with-keychordaction)
   - [5. Using wildcards](#5-using-wildcards)
   - [6. Combining features with conditions and wildcard patterns](#6-combining-features-with-conditions-and-wildcard-patterns)
@@ -35,12 +30,12 @@
 
 ## Introduction
 
-KeyChord is a class for AutoHotkey v2 that allows you to create complex key chords (key sequences, key chains, whatever you want to call them). It enables you to bind multiple actions to a series of keystrokes, creating a flexible and customizable hotkey system.
+KeyChord is a class for AutoHotkey v2 that allows you to create complex key chords (key sequences, key chains, whatever you want to call them). It enables you to bind multiple actions to a series of keystrokes, creating a flexible and customizable hotkey system. KeyChord extends the `Map` class, and as such all of it's methods and properties are available, and they can be enumerated.
 
 ## Features
 
 - Create nested key chord sequences
-- Support for various types of actions (strings, numbers, functions, and nested KeyChords)
+- Support for various types of actions (strings, numbers, functions, and nested KeyChords, to name a few)
 - Customizable timeout for key input
 - Conditional actions. Only executed if the attached condition is true.
     - Conditions can be any valid expression that evaluates to true or false.
@@ -63,49 +58,22 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 
 - #### Constructor
 
-    `KeyChord(defaultTimeout := 3)`
-    - `defaultTimeout` : The default timeout (in seconds) for user input
+    `KeyChord(timeout?, args*)`
+    - `timeout` : The default timeout (in seconds) for user input, optional. Defaults to 3.
+    - `args*` : List of Key - Command Mappings (same syntax as Map or Map.Call). If no `args*` are passed, the KeyChord will be empty.
 
 - #### Properties
 
-    - `chords` : Map of keys to actions
-    - `nestedChords` : Map of keys to nested KeyChord instances
-    - `wildcards` : Map of wildcard keys to actions
-    - `defaultTimeout` : The default timeout for user input
+    - `Timeout` : The timeout (in seconds) for user input, default is 3 seconds.
 
 - #### Methods
 
-    - `Add(key, action)`
-
-        - Adds a new key-action mapping to the KeyChord
-        - `key`: The key or key combination to trigger the action
-        - `action`: The action to perform (can be a value, function, or nested KeyChord)
-
-    - `Remove(key)`
-
-        - Removes a key-action mapping from the KeyChord
-        - `key`: The key to remove
-
-    - `Update(key, newAction)`
-
-        - Updates an existing key-action mapping
-        - `key`: The key to update
-        - `newAction`: The new action to associate with the key
-
-    - `Clear()`
-
-        - Removes all key-action mappings from the KeyChord
+    - Inherits all methods from `Map`. The `Set` and `New` Methods are overridden to ensure proper types are passed in.
 
     - `Execute(timeout := this.defaultTimeout)`
 
         - Executes the KeyChord, waiting for user input
         - `timeout`: The timeout for user input in seconds
-
-    - `static CreateFromMap(timeout, bindingsMap)`
-
-        - Creates a new KeyChord instance from a map of key-action bindings
-        - `timeout`: The timeout for user input in seconds
-        - `bindingsMap`: A map of key-action bindings
 
 ### 2. KeyChord.Action Class
 
@@ -126,50 +94,40 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
     - Evaluates the Condition and Executes the Command if the condition is true.
 ___
 ## Instructions
-### Creating a KeyChord instance:
-1. Using the constructor:
-    `chord := KeyChord(timeout)`
-    - `timeout` (optional) is the default timeout in seconds for key chord input. If not provided, it defaults to 3 seconds.
-
-2. Using the static `CreateFromMap` method:
-    `chord := KeyChord.CreateFromMap(timeout, bindingsMap)`
-    - `timeout` is the timeout in seconds for key chord input.
-    - `bindingsMap` is a Map of key-command bindings.
-
 ### Adding key-command mappings:
-1. Using the `Add` method:
-    `chord.Add(key, action)`
+1. Using the `Set` method:
+    `chord.Set(key, action)`
     - `key` is the key combination to map (e.g., "a", "^a", "#a", etc.).
-    - `action` can be a boolean, string, integer, float, Func, BoundFunc, KeyChord.Action, or a nested KeyChord instance.
+    - `action` can be a Boolean, String, Integer, Float, Number, Func, BoundFunc, Closure, Enumerator, KeyChord.Action, or a nested KeyChord instance.
 
 ### Executing a KeyChord:
 1. Using the `Execute` method:
-    `chord.Execute(timeout)`
-    - `timeout` (optional) is the timeout in seconds for user input. If not provided, the default timeout of 3 seconds is used.
+    `chord.Execute()`
+        - During the time that this function is executing (no pun intended), the User's Hotkeys will be Suspended to avoid any conflicts.
 
 ### Advanced Declaration Syntax:
-Because `KeyChord.Action` is just a fancy object that has the properties `Command` and `Condition`, we can pass an inline object declaration with those two properties to the class instead of declaring a new KeyChord.Action() in our code. That part will be handled by the KeyChord class in this case. This leads to my favorite way to declare a KeyChord:
+Because `KeyChord.Action` is just a fancy object that has the properties `Command` and `Condition`, we can pass an inline object declaration with those two properties to the class instead of declaring a new `KeyChord.Action` in our code. That part will be handled by the KeyChord class in this case. This leads to my favorite way to declare a KeyChord:
 ```ahk
 #Include "KeyChord.ahk"
 
-myKeyChord := KeyChord.CreateFromMap(3, Map(
+myKeyChord := KeyChord(3,
     "c", {
         Condition: () => WinActive("ahk_exe Code.exe"),
         Command:   () => Run("calc.exe") },
     "s", {
         Condition: SomeFunction.Bind(arg1, arg2, arg3),
         Command:   SomeOtherFunction.Bind() },
-    "d", KeyChord.CreateFromMap(3, Map(
+    "d", KeyChord(3,
         "d", {
             Condition: () => True,
             Command:   Send.Bind(FormatTime(A_Now, "MM/dd/yy")) },
         "t", {
             Condition: () => (A_Hour < 12),
-            Command:   Send.Bind(FormatTime(A_Now, "hh:mm tt")) })),
+            Command:   Send.Bind(FormatTime(A_Now, "hh:mm tt")) }),
     "o", {
         Condition: () => WinActive("ahk_exe wordpad.exe"),
         Command:   "Typing, in WordPad." },
-))
+)
 
 ^#k::myKeyChord.Execute()
 ```
@@ -177,7 +135,7 @@ Or, for a more spread-out declaration (same thing, just adjusted braces and assi
 ```ahk
 #Include "KeyChord.ahk"
 
-^#k::KeyChord.CreateFromMap(3, Map(   
+^#k::KeyChord(3,   
     "c",
         {
             Condition: () => WinActive("ahk_exe Code.exe"),
@@ -188,7 +146,7 @@ Or, for a more spread-out declaration (same thing, just adjusted braces and assi
             Condition: SomeFunction.Bind(arg1, arg2, arg3),
             Command:   SomeOtherFunction.Bind(),
         },
-    "d", KeyChord.CreateFromMap(3, Map(
+    "d", KeyChord(, ;<= No, thats not a Typo, you can omit an argument for the timeout value and it will default to 3 seconds.
         "d",
             {
                 Condition: () => True,
@@ -199,13 +157,13 @@ Or, for a more spread-out declaration (same thing, just adjusted braces and assi
                 Condition: () => (A_Hour < 12),
                 Command:   Send.Bind(FormatTime(A_Now, "hh:mm tt")),
             },
-        )),
+        ),
     "o",
         {
             Condition: () => WinActive("ahk_exe wordpad.exe"),
             Command:   "Typing, in WordPad.",
         },
-)).Execute()
+).Execute()
 ```
 You could assign the KeyChord directly to a hotkey, like we did in  the second example above, by calling `^#k::KeyChord.CreateFromMap(timeout, map).Execute()`. However, if you assign it directly to a hotkey, you won't be able to dynamically add and remove bindings to and from the KeyChord. So it's best to just assign the KeyChord instance to a variable, and then assign the variable to a hotkey, as in the first example above. When using the above declaration syntax be extra careful and make sure you have commas on the ends of all the lines you need them on. Forgetting one comma can lead to some weird errors.
 
@@ -218,9 +176,9 @@ ___
 
 myKeyChord := KeyChord(2)  ; Create a new KeyChord with a 2-second timeout
 
-myKeyChord.Add("c", Run.Bind("calc.exe"))
-myKeyChord.Add("n", Run.Bind("notepad.exe"))
-myKeyChord.Add("w", "Hello, World!")
+myKeyChord.Set("c", Run.Bind("calc.exe"))
+myKeyChord.Set("n", Run.Bind("notepad.exe"))
+myKeyChord.Set("w", "Hello, World!")
 
 ^!k::myKeyChord.Execute()  ; Ctrl+Alt+K triggers the KeyChord
 ```
@@ -238,12 +196,12 @@ In this example, pressing any of the following within 2 seconds after pressing C
 mainChord := KeyChord(3) ; KeyChord with 3 second timeout
 subChord := KeyChord(2)  ; KeyChord with 2 second timeout
 
-subChord.Add("g", Run.Bind("https://www.google.com"))
-subChord.Add("b", Run.Bind("https://www.bing.com"))
+subChord.Set("g", Run.Bind("https://www.google.com"))
+subChord.Set("b", Run.Bind("https://www.bing.com"))
 
-mainChord.Add("c", Run.Bind("calc.exe"))
-mainChord.Add("n", Run.Bind("notepad.exe"))
-mainChord.Add("w", subChord)
+mainChord.Set("c", Run.Bind("calc.exe"))
+mainChord.Set("n", Run.Bind("notepad.exe"))
+mainChord.Set("w", subChord)
 
 ^!m::mainChord.Execute()
 ```
@@ -258,24 +216,24 @@ In this example, within 3 seconds after pressing Ctrl+Alt+M:
 Having multiple nested KeyChords will let you use the same button to trigger multiple different actions. For example, "Ctrl+I, then A, then P" might open MS Paint, but "Ctrl+I, then B, then P" might open Notepad.
 
 ***
-### 3. Using CreateFromMap
+### 3. Using default constructor
 ```ahk
 #Include "KeyChord.ahk"
 
-keyBindings := Map(
+keyBindings := KeyChord(3,
     "c", Run.Bind("calc.exe"),
     "n", Run.Bind("notepad.exe"),
-    "w", KeyChord.CreateFromMap(2, Map(
+    "w", KeyChord(2,
         "g", Run.Bind("https://www.google.com"),
         "b", Run.Bind("https://www.bing.com")
-    ))
+    )
 )
 
-myKeyChord := KeyChord.CreateFromMap(3, keyBindings)
+myKeyChord := .CreateFromMap(3, keyBindings)
 
 ^!k::myKeyChord.Execute()
 ```
-This example creates the same structure as the [previous nested KeyChords example](#2-nested-keychords) but uses the CreateFromMap method for a more concise setup. 
+This example creates the same structure as the [previous nested KeyChords example](#2-nested-keychords) but uses the constructor for a more concise setup. 
 
 ***
 ### 4. Using conditions with KeyChord.Action
@@ -284,8 +242,8 @@ This example creates the same structure as the [previous nested KeyChords exampl
 
 myKeyChord := KeyChord(2)
 
-myKeyChord.Add("a", KeyChord.Action(Run.Bind("notepad.exe"), () => A_Hour < 12))
-myKeyChord.Add("b", KeyChord.Action(Run.Bind("calc.exe"), () => A_Hour >= 12))
+myKeyChord.Set("a", KeyChord.Action(Run.Bind("notepad.exe"), () => A_Hour < 12))
+myKeyChord.Set("b", KeyChord.Action(Run.Bind("calc.exe"), () => A_Hour >= 12))
 
 ^!k::myKeyChord.Execute()
 ```
@@ -301,9 +259,9 @@ In this example, within 2 seconds after pressing Ctrl-Alt-k:
 
 myKeyChord := KeyChord(2)
 
-myKeyChord.Add("a-z", MsgBox.Bind("You pressed a letter!"))
-myKeyChord.Add("0-9", () => MsgBox("You pressed a number!"))
-myKeyChord.Add("F*" , MsgBox.Bind("You pressed F1-F24!"))
+myKeyChord.Set("a-z", MsgBox.Bind("You pressed a letter!"))
+myKeyChord.Set("0-9", () => MsgBox("You pressed a number!"))
+myKeyChord.Set("F*" , MsgBox.Bind("You pressed F1-F24!"))
 
 ^!k::myKeyChord.Execute()
 ```
@@ -318,20 +276,20 @@ In this example, after pressing Ctrl+Alt+K:
 ```ahk
 #Include "KeyChord.ahk"
 
-mainChord := KeyChord(3)
-nestedChord := KeyChord(3)
-wildcardChord := KeyChord(3)
+mainChord := KeyChord()     ;
+nestedChord := KeyChord()   ; KeyChords have a 3 second timeout value by default.
+wildcardChord := KeyChord() ;
 
-mainChord.Add("c", Run.Bind("calc"))
-mainChord.Add("n", Run.Bind("notepad"))
-mainChord.Add("1", nestedChord)
-mainChord.Add("F*", wildcardChord)
+mainChord.Set("c", Run.Bind("calc"))
+mainChord.Set("n", Run.Bind("notepad"))
+mainChord.Set("1", nestedChord)
+mainChord.Set("F*", wildcardChord)
 
-nestedChord.Add("p", Run.Bind("mspaint"))
-nestedChord.Add("w", KeyChord.Action(Run.Bind("wordpad"), () => A_Hour >= 9 && A_Hour < 17))
+nestedChord.Set("p", Run.Bind("mspaint"))
+nestedChord.Set("w", KeyChord.Action(Run.Bind("wordpad"), () => A_Hour >= 9 && A_Hour < 17))
 
-wildcardChord.Add("*a", Run.Bind("explorer.exe"))
-wildcardChord.Add("b-d", KeyChord.Action(Run.Bind("https://www.example.com"), "A_ComputerName = 'MyComputer'"))
+wildcardChord.Set("*a", Run.Bind("explorer.exe"))
+wildcardChord.Set("b-d", KeyChord.Action(Run.Bind("https://www.example.com"), "A_ComputerName = 'MyComputer'"))
 
 ^#a::mainChord.Execute()
 ```
@@ -368,7 +326,7 @@ number2 := 6
 customChord := KeyChord()
 
 ; Add a key-command mapping using the custom function
-customChord.Add("c", KeyChord.Action(AddAndDisplay.Bind(number1, number2), IsNumberEven.Bind(number1, number2)))
+customChord.Set("c", KeyChord.Action(AddAndDisplay.Bind(number1, number2), IsNumberEven.Bind(number1, number2)))
 
 ; Bind the KeyChord instance to a hotkey
 ^#c::customChord.Execute()
