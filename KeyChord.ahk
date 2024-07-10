@@ -111,7 +111,7 @@ class KeyChord
          * @param {Integer} [timeout=this.defaultTimeout (3)] The timeout (in seconds) for user input. If not provided, the default timeout is used.
          * @returns {Void}
          */
-        Execute()
+        Execute(timeout)
         {
             /**
              * Evaluates a condition value and returns a boolean result.
@@ -433,13 +433,13 @@ class KeyChord
             if this.chords.Has(this.key) || this.chords.Has(unsidedKey)
             {
                 action := this.chords.Get(this.key)
-                action.Execute()
+                action.Execute(timeout)
                 return
             }
             else if this.nestedChords.Has(this.key) || this.nestedChords.Has(unsidedKey)
             {
                 action := this.nestedChords.Get(this.key)
-                action.Execute()
+                action.Execute(timeout)
                 return
             }
             else
@@ -448,7 +448,7 @@ class KeyChord
                 {
                     if (KeyChord.MatchWildcard(pattern, this.key) || KeyChord.MatchWildcard(pattern, unsidedKey))
                     {
-                        action.Execute()
+                        action.Execute(timeout)
                         return
                     }
                 }
