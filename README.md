@@ -220,7 +220,7 @@ Having multiple nested KeyChords will let you use the same button to trigger mul
 ```ahk
 #Include "KeyChord.ahk"
 
-keyBindings := KeyChord(3,
+myKeyChord := KeyChord(3,
     "c", Run.Bind("calc.exe"),
     "n", Run.Bind("notepad.exe"),
     "w", KeyChord(2,
@@ -228,8 +228,6 @@ keyBindings := KeyChord(3,
         "b", Run.Bind("https://www.bing.com")
     )
 )
-
-myKeyChord := KeyChord.CreateFromMap(3, keyBindings)
 
 ^!k::myKeyChord.Execute()
 ```
