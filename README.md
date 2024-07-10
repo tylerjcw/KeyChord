@@ -252,8 +252,8 @@ In this example, within 3 seconds after pressing Ctrl+Alt+M:
 - Pressing 'c' will launch the Calculator
 - Pressing 'n' will launch Notepad
 - Pressing 'w' will activate the subChord, then (within 2 seconds):
-- Pressing 'g' will open Google
-- Pressing 'b' will open Bing
+    - Pressing 'g' will open Google
+    - Pressing 'b' will open Bing
 
 Having multiple nested KeyChords will let you use the same button to trigger multiple different actions. For eaxampl "Ctrl+I, then A, then P" might open MS Paint, but "Ctrl+I, then B, then P" might open Notepad.
 
