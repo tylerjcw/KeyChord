@@ -77,33 +77,33 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 
     - `Add(key, action)`
 
-        Adds a new key-action mapping to the KeyChord
+        - Adds a new key-action mapping to the KeyChord
         - `key`: The key or key combination to trigger the action
         - `action`: The action to perform (can be a value, function, or nested KeyChord)
 
     - `Remove(key)`
 
-        Removes a key-action mapping from the KeyChord
+        - Removes a key-action mapping from the KeyChord
         - `key`: The key to remove
 
     - `Update(key, newAction)`
 
-        Updates an existing key-action mapping
+        - Updates an existing key-action mapping
         - `key`: The key to update
         - `newAction`: The new action to associate with the key
 
     - `Clear()`
 
-        Removes all key-action mappings from the KeyChord
+        - Removes all key-action mappings from the KeyChord
 
     - `Execute(timeout := this.defaultTimeout)`
 
-        Executes the KeyChord, waiting for user input
+        - Executes the KeyChord, waiting for user input
         - `timeout`: The timeout for user input in seconds
 
     - `static CreateFromMap(timeout, bindingsMap)`
 
-        Creates a new KeyChord instance from a map of key-action bindings
+        - Creates a new KeyChord instance from a map of key-action bindings
         - `timeout`: The timeout for user input in seconds
         - `bindingsMap`: A map of key-action bindings
 
@@ -122,8 +122,8 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 
 - #### Method
 
-    `Execute(timeout)`
-    Evaluates the Condition and Executes the Command if the condition is true.
+    `Execute()`
+    - Evaluates the Condition and Executes the Command if the condition is true.
 ___
 ## Instructions
 ### Creating a KeyChord instance:
@@ -140,16 +140,12 @@ ___
 1. Using the `Add` method:
     `chord.Add(key, action)`
     - `key` is the key combination to map (e.g., "a", "^a", "#a", etc.).
-    - `action` can be a string, integer, float, BoundFunc, KeyChord.Action, or a nested KeyChord instance.
-
-2. Using the `CreateFromMap` method:
-    `chord := KeyChord.CreateFromMap(timeout, bindingsMap)`
-    - `bindingsMap` is a Map where the keys are the key combinations, and the values are the associated commands or nested KeyChord instances.
+    - `action` can be a boolean, string, integer, float, Func, BoundFunc, KeyChord.Action, or a nested KeyChord instance.
 
 ### Executing a KeyChord:
 1. Using the `Execute` method:
     `chord.Execute(timeout)`
-    - `timeout` (optional) is the timeout in seconds for user input. If not provided, the default timeout is used.
+    - `timeout` (optional) is the timeout in seconds for user input. If not provided, the default timeout of 3 seconds is used.
 
 ### Advanced Declaration Syntax:
 Because `KeyChord.Action` is just a fancy object that has the properties `Command` and `Condition`, we can pass an inline object declaration with those two properties to the class instead of declaring a new KeyChord.Action() in our code. That part will be handled by the KeyChord class in this case. This leads to my favorite way to declare a KeyChord:
@@ -211,7 +207,7 @@ Or, for a more spread-out declaration (same thing, just adjusted braces and assi
         },
 )).Execute()
 ```
-You could assign the KeyChord directly to a hotkey, like we did in  the second example above, by calling `^#k::KeyChord.CreateFromMap(timeout, map).Execute()`. However, if you assign it directly to a hotkey, you won't be able to dynamically add and remove bindings to and from the KeyChord. So it's best to just assign the KeyChord instance to a variable, and then assign the variable to a hotkey, as above. When using the above declaration syntax be extra careful and make sure you have commas on the ends of all the lines you need them on. Forgetting one comma can lead to some weird errors.
+You could assign the KeyChord directly to a hotkey, like we did in  the second example above, by calling `^#k::KeyChord.CreateFromMap(timeout, map).Execute()`. However, if you assign it directly to a hotkey, you won't be able to dynamically add and remove bindings to and from the KeyChord. So it's best to just assign the KeyChord instance to a variable, and then assign the variable to a hotkey, as in the first example above. When using the above declaration syntax be extra careful and make sure you have commas on the ends of all the lines you need them on. Forgetting one comma can lead to some weird errors.
 
 ___
 ## Examples
