@@ -255,7 +255,7 @@ In this example, within 3 seconds after pressing Ctrl+Alt+M:
     - Pressing 'g' will open Google
     - Pressing 'b' will open Bing
 
-Having multiple nested KeyChords will let you use the same button to trigger multiple different actions. For eaxampl "Ctrl+I, then A, then P" might open MS Paint, but "Ctrl+I, then B, then P" might open Notepad.
+Having multiple nested KeyChords will let you use the same button to trigger multiple different actions. For example, "Ctrl+I, then A, then P" might open MS Paint, but "Ctrl+I, then B, then P" might open Notepad.
 
 ***
 ### 3. Using CreateFromMap
