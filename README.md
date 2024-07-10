@@ -229,7 +229,7 @@ keyBindings := KeyChord(3,
     )
 )
 
-myKeyChord := .CreateFromMap(3, keyBindings)
+myKeyChord := KeyChord.CreateFromMap(3, keyBindings)
 
 ^!k::myKeyChord.Execute()
 ```
