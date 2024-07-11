@@ -59,7 +59,7 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 - #### Constructor
 
     `KeyChord(timeout?, args*)`
-    - `timeout` : The default timeout (in seconds) for user input, optional. Defaults to 3.
+    - `timeout` : The default timeout (in seconds) for user input, optional. Defaults to 3 seconds.
     - `args*` : List of Key - Command Mappings (same syntax as Map or Map.Call). If no `args*` are passed, the KeyChord will be empty.
 
 - #### Properties
