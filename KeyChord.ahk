@@ -23,7 +23,6 @@
  *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  
 **/
-
 #Requires AutoHotkey v2.0
 
 /**
@@ -61,16 +60,11 @@ class KeyChord extends Map
         {
             if (Mod(index, 2) == 0)
                 continue
-
+    
             key := arg
             action := args[index + 1]
-
-            if (action is KeyChord.Action)
-                this.Set(key, action)
-            else if ((action is Object) && action.HasOwnProp("Command")) ; Check if the object has a Command property
-                super.Set(key, KeyChord.Action(action.Command, action.HasOwnProp("Condition") ? action.Condition : True))
-            else
-                throw ValueError("Argument must be a KeyChord.Action or Object with a Command property.", -1, Type(arg)) ; Throw an error if the action is not a KeyChord.Action
+    
+            this.Set(key, action)
         }
     }
 
@@ -82,13 +76,13 @@ class KeyChord extends Map
     Set(key, action)
     {
         if (action is KeyChord.Action)
-            super.Set(key, action) ; Add the action to the map
+            super.Set(key, action)
         else if ((action is Object) && action.HasOwnProp("Command")) ; Check if the object has a Command property
-            super.Set(key, KeyChord.Action(action.Command, action.HasOwnProp("Condition") ? action.Condition : True)) ; Add a new Action object with the Command and Condition properties
+            super.Set(key, KeyChord.Action(action.Command, action.HasOwnProp("Condition") ? action.Condition : True)) ; Second argument is a ternary operator to check if the object has a Condition property
         else if ((action is String) || (action is Integer) || (action is Float) || (action is Number) || (action is Func) || (action is BoundFunc) || (action is Closure) || (action is Enumerator))
             super.Set(key, KeyChord.Action(action, True))
         else
-            throw ValueError("Argument must be a KeyChord.Action", -1, Type(action)) ; Throw an error if the action is not a KeyChord.Action
+            throw ValueError("Argument must be a KeyChord.Action or Object with a Command property.", -1, Type(action)) ; Throw an error if the action is not a KeyChord.Action
     }
 
     /**
@@ -104,15 +98,13 @@ class KeyChord extends Map
             keyString .= key
         }
 
-        ToolTip("Press a key...`n" keyString)
+        TimedToolTip("Press a key...`n" keyString, this.Timeout)
         input := GetUserInput(this.Timeout)
-        ToolTip(input)
-        SetTimer () => ToolTip(), 1000
+        TimedToolTip(input, 1)
 
         if (input == "")
         {
-            ToolTip("Error: No input received.")
-            SetTimer () => ToolTip(), 3000
+            TimedToolTip("Error: No input received.")
             return false
         }
         else
@@ -136,6 +128,8 @@ class KeyChord extends Map
                 }
             }
         }
+
+        TimedToolTip(text, duration?) => ( ToolTip(text), SetTimer(() => ToolTip(), -(IsSet(duration) ? 1000 * duration : 3000)) )
 
         GetUserInput(timeout := 0)
         {
@@ -278,8 +272,7 @@ class KeyChord extends Map
     {
         ; The command to be executed when the Action is executed.
         Command := ""
-
-        ; The condition that must be True in order to execute the command.
+        ; The condition that must evaluate to True in order to execute the command.
         Condition := True
 
         /**
