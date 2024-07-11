@@ -10,9 +10,9 @@
     - [KeyChord Properties](#keychord-properties)
     - [KeyChord Methods](#keychord-methods)
   - [2. KeyChord.Action Class](#2-keychordaction-class)
-    - [Action Constructor](#action-constructor)
-    - [Action Properties](#action-properties)
-    - [Action Methods](#action-methods)
+    - [KeyChord.Action Constructor](#keychordaction-constructor)
+    - [KeyChord.Action Properties](#keychordaction-properties)
+    - [KeyChord.Action Methods](#keychordaction-methods)
 - [Instructions](#instructions)
   - [Adding key-command mappings](#adding-key-command-mappings)
   - [Executing a KeyChord](#executing-a-keychord)
@@ -91,18 +91,18 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 
 ### 2. KeyChord.Action Class
 
-- #### Action Constructor
+- #### KeyChord.Action Constructor
 
   `KeyChord.Action(command, condition := True)`
   - `command`: The action to perform
   - `condition`: An optional condition that must be true for the action to execute
 
-- #### Action Properties
+- #### KeyChord.Action Properties
 
   - `Command`: The action to perform
   - `Condition`: The condition for execution
 
-- #### Action Methods
+- #### KeyChord.Action Methods
 
   `Execute()`
   - Evaluates the Condition and Executes the Command if the condition is true.
