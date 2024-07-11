@@ -75,7 +75,7 @@ class KeyChord extends Map
     **/
     Set(key, action)
     {
-        if (action is KeyChord.Action)
+        if (action is KeyChord.Action) || (action is KeyChord)
             super.Set(key, action)
         else if ((action is Object) && action.HasOwnProp("Command")) ; Check if the object has a Command property
             super.Set(key, KeyChord.Action(action.Command, action.HasOwnProp("Condition") ? action.Condition : True)) ; Second argument is a ternary operator to check if the object has a Condition property
@@ -114,7 +114,7 @@ class KeyChord extends Map
 
         if (this.Has(input) || this.Has(unsidedInput))
         {
-            this.Get(input).Execute(this.Timeout)
+            this.Get(input).Execute()
             return True
         }
         else
@@ -307,7 +307,7 @@ class KeyChord extends Map
          * 
          *  @param timeout {Integer} The timeout value for the action.
         **/
-        Execute(timeout)
+        Execute()
         {
             EvaluateCondition(value)
             {
@@ -332,7 +332,7 @@ class KeyChord extends Map
                 switch Type(this.Command)
                 {
                     Case "KeyChord":
-                        this.Command.Execute(timeout)
+                        this.Command.Execute()
                         return
                     Case "String", "Integer", "Boolean", "Number", "Float":
                         Send(this.Command)
