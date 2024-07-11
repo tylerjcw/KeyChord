@@ -327,8 +327,8 @@ mainChord.Set("F*", wildcardChord)
 nestedChord.Set("p", Run.Bind("mspaint"))
 nestedChord.Set("w", KeyChord.Action(Run.Bind("wordpad"), () => A_Hour >= 9 && A_Hour < 17))
 
-wildcardChord.Set("*a", Run.Bind("explorer.exe"))
-wildcardChord.Set("b-d", KeyChord.Action(Run.Bind("https://www.google.com"), "A_ComputerName = 'MyComputer'"))
+wildcardChord.Set("<+>+?", Run.Bind("explorer.exe"))
+wildcardChord.Set("b-f", KeyChord.Action(Run.Bind("https://www.google.com"), "A_ComputerName = 'MyComputer'"))
 
 ^#a::mainChord.Execute()
 ```
@@ -337,7 +337,7 @@ This example combines nested key chords, wildcard key-command mappings, regular 
 
 - The `mainChord` instance has mappings for "c" and "n" keys, a nested `nestedChord` instance mapped to the "1" key, and a `wildcardChord` instance mapped to the "F*" key (wildcard representing any key F1-F24).
 - The `nestedChord` has a mapping for the "p" key to open Paint, and a mapping for the "w" key to open Wordpad, but only if the current hour is between 9 AM and 5 PM (inclusive).
--The `wildcardChord` has a wildcard mapping for "<+>+?" (LShift, RShift, and any other single character key) to open the File Explorer, and a range mapping for `b-f` (`b`, `c`, `d`, `e`, or `f`) to open Google, but only if the computer name is "MyComputer".
+-The `wildcardChord` has a wildcard mapping for `<+>+?` (LShift, RShift, and any other single character key) to open the File Explorer, and a range mapping for `b-f` (`b`, `c`, `d`, `e`, or `f`) to open Google, but only if the computer name is "MyComputer".
 
 ___
 
