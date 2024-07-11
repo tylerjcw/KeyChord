@@ -95,7 +95,7 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 
   `KeyChord.Action(command, condition := True)`
   - `command`: The action to perform
-  - `condition`: An optional condition that must be true for the action to execute
+  - `condition`: An optional condition that must evaluate to `True` for the action to execute
 
 - #### KeyChord.Action Properties
 
