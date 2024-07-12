@@ -264,7 +264,7 @@ class KeyChord extends Map
      *  An Action encapsulates a command and an optional condition that must be met in order to execute the command.
      *  
      *  @constructor `Action(command, condition := True)`
-     *  @property {Any} Command The command to be executed when the Action is executed.
+     *  @property {KeyChord|Action|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} Command The command to be executed when the Action is executed.
      *  @property {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} [Condition=True] The condition that must be met in order to execute the command. Defaults to `True`.
      *  @method `Execute()`: `Void` Executes the command if the condition is met.
      */
