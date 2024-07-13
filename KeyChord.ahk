@@ -36,6 +36,7 @@
 **/
 class KeyChord extends Map
 {
+    RemindKeys := False ; If you want to change the default behavior of this option, this is where you do it
     Timeout := 3
 
     /**
@@ -43,7 +44,7 @@ class KeyChord extends Map
      *  
      *  @param {Integer} timeout The default timeout in seconds for key chord input. Must be greater than 0.
      *  @param args* Additional arguments to pass to the Map constructor.
-     */
+    **/
     __New(timeout?, args*)
     {
         if IsSet(timeout)
@@ -75,11 +76,15 @@ class KeyChord extends Map
     **/
     Set(key, action)
     {
-        if (action is KeyChord.Action) || (action is KeyChord)
+        if (action is KeyChord.Action)
             super.Set(key, action)
         else if ((action is Object) && action.HasOwnProp("Command")) ; Check if the object has a Command property
-            super.Set(key, KeyChord.Action(action.Command, action.HasOwnProp("Condition") ? action.Condition : True)) ; Second argument is a ternary operator to check if the object has a Condition property
-        else if ((action is String) || (action is Integer) || (action is Float) || (action is Number) || (action is Func) || (action is BoundFunc) || (action is Closure) || (action is Enumerator))
+            super.Set(key, KeyChord.Action(
+                    action.Command,
+                    action.HasOwnProp("Condition")   ? action.Condition   : True,
+                    action.HasOwnProp("Description") ? action.Description : ""
+                ))
+        else if (action is KeyChord) || ((action is String) || (action is Integer) || (action is Float) || (action is Number) || (action is Func) || (action is BoundFunc) || (action is Closure) || (action is Enumerator))
             super.Set(key, KeyChord.Action(action, True))
         else
             throw ValueError("Argument must be a KeyChord.Action or Object with a Command property.", -1, Type(action)) ; Throw an error if the action is not a KeyChord.Action
@@ -104,8 +109,13 @@ class KeyChord extends Map
 
         if (input == "")
         {
+            if this.RemindKeys
+            {
+                MonoMsgBox(ParseDescriptions(this, 1, "`n" A_ThisHotkey "`n")) ;, "KeyChord Mappings", "O Iconi 4096")
+            }
+
             TimedToolTip("Error: No input received.")
-            return false
+            return False
         }
         else
         {
@@ -256,6 +266,60 @@ class KeyChord extends Map
 
             return false
         }
+
+        ParseDescriptions(keychord, level, key_descriptions_string := "") ; ┬└─┐┴
+        {
+            for key, action in keychord
+            {
+                if (action.HasOwnProp("Description"))
+                {
+                    description := action.Description
+
+                    if (Type(action.Command) == "KeyChord")
+                    {
+                        if IsSet(description)
+                            key_descriptions_string .= RepStr("   ", level) . key "  -  " description "`n"
+                        else
+                            key_descriptions_string .= RepStr("   ", level) . key "  -  Description Not Set`n"
+
+                        key_descriptions_string := ParseDescriptions(action.Command, level + 1, key_descriptions_string)
+                    }
+                    else
+                    {
+                        if IsSet(description)
+                            key_descriptions_string .= RepStr("   ", level) . key "  -  " description "`n"
+                        else
+                            key_descriptions_string .= RepStr("   ", level) . key "  -  Description Not Set`n"
+                    }
+                }
+            }
+
+            RepStr(str, count)
+            {
+                result := ""
+                Loop(count)
+                    result .= str
+                return result
+            }
+
+            return key_descriptions_string
+        }
+
+        MonoMsgBox(message)
+        {
+            msg_box := Gui()
+            msg_box.Title := "KeyChord Mappings"
+            msg_box.SetFont("s11", "Lucida Console")
+            msg_text := msg_box.AddText(, message)
+            ok_btn := msg_box.AddButton("Default w80 X+-80 Y+0", "&OK")
+            ok_btn.OnEvent("Click", Destroy)
+            msg_box.Show()
+            
+            Destroy(*)
+            {
+                msg_box.Destroy()
+            }
+        }
     }
 
     /**
@@ -267,13 +331,15 @@ class KeyChord extends Map
      *  @property {KeyChord|Action|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} Command The command to be executed when the Action is executed.
      *  @property {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} [Condition=True] The condition that must be met in order to execute the command. Defaults to `True`.
      *  @method `Execute()`: `Void` Executes the command if the condition is met.
-     */
+    **/
     class Action
     {
         ; The command to be executed when the Action is executed.
         Command := ""
         ; The condition that must evaluate to True in order to execute the command.
         Condition := True
+        ; The description if the user has the "remind keys" option for a KeyChord toggled on.
+        Description := ""
 
         /**
          *  Initializes a new instance of the `Action` class.
@@ -281,13 +347,12 @@ class KeyChord extends Map
          *  @param {Any} command The command to be executed when the Action is executed.
          *  @param {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} [Condition=True] The condition that must be met in order to execute the command.
          */
-        __New(command, condition)
+        __New(command, condition, description:= "Description not set")
         {
             switch Type(command)
             {
                 case "KeyChord", "String", "Integer", "Number", "Float", "Func", "BoundFunc", "Closure", "Enumerator":
                     this.Command := command
-                    return
                 default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
                     throw ValueError("Command must be or evaluate to a KeyChord, String, Integer, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, "Command: " Type(this.Command))
             }
@@ -296,10 +361,16 @@ class KeyChord extends Map
             {
                 case "String", "Integer", "Number", "Float", "Func", "BoundFunc", "Closure", "Enumerator":
                     this.Condition := condition
-                    return
                 default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
                     throw ValueError("Condition must be or evaluate to a String, Integer, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, "Condition: " Type(this.Condition))
             }
+
+            if (IsSet(description) && Type(description) == "String")
+                this.Description := description
+            else if !(Type(description) == "String")
+                throw ValueError("Description must be or evaluate to a String", -1, "Description: " Type(this.Description))
+
+            return
         }
 
         /**
