@@ -207,7 +207,9 @@ myKeyChord := KeyChord(3,
         Description: "Sends `"Typing in WordPad`"" },
 )
 
-myKeyChord.RemindKeys := False ; When True (default): displays a window with a list of the current KeyChord's mappings and any "perent" keys used to get there (if a Sub-KeyChord).
+; When True (default): displays a window with a list of the current KeyChord's
+; mappings and any "parent" keys used to get there (if a Sub-KeyChord).
+myKeyChord.RemindKeys := False
 
 ^#k::myKeyChord.Execute()
 ```
