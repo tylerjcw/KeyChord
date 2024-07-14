@@ -36,11 +36,11 @@
 **/
 class KeyChord extends Map
 {
-    ; Timeout value for user input before the InputHook stops listening for key presses
+    ; Timeout value for user input before the InputHook stops listening for key presses.
     Timeout := 3 ; Change this to change the default timeout value of all newly created KeyChords (value is in seconds)
 
-    ; Set this to true to have descriptive key rimnder message boxes show when no input is received before the timeout
-    RemindKeys := False ; Set to true to have descriptive key reminder Message boxes on by default
+    ; If True, displays a helpful Key Reminder Message box when the InputHook times out.
+    RemindKeys := True ; Set to False to have descriptive key reminder Message boxes OFF by default
 
     /**
      *  Initializes a new instance of the KeyChord class with the specified timeout (default 3 seconds).
@@ -119,20 +119,6 @@ class KeyChord extends Map
     }
 
     /**
-     *  Initializes a new instance of the KeyChord class with the specified timeout (default 3 seconds).
-     *  @param {Integer} timeout The default timeout in seconds for key chord input. Must be greater than 0.
-     *  @param args* Additional arguments to pass to the Map constructor.
-    **/
-    Call(timeout?, args*)
-    {
-        if IsSet(timeout)
-            this.Timeout := timeout
-
-        if (args.Length > 0)
-            return KeyChord(timeout, args)
-    }
-
-    /**
      *  Sets a key-action pair in the KeyChord
      *  @param key The key which the user will press to execute `action`
      *  @param action The action to execute when the user presses `key`
@@ -145,7 +131,7 @@ class KeyChord extends Map
             super.Set(key, KeyChord.Action(
                     action.Command,
                     action.HasOwnProp("Condition")   ? action.Condition   : True,
-                    action.HasOwnProp("Description") ? action.Description : ""
+                    action.HasOwnProp("Description") ? action.Description : "Description not set."
                 ))
         else if (action is KeyChord) || ((action is String) || (action is Integer) || (action is Float) || (action is Number) || (action is Func) || (action is BoundFunc) || (action is Closure) || (action is Enumerator))
             super.Set(key, KeyChord.Action(action, True))
@@ -334,10 +320,11 @@ class KeyChord extends Map
         {
             msg_box := Gui()
             msg_box.Opt("+ToolWindow +AlwaysOnTop -Resize")
-            msg_box.Title := "KeyChord Mappings"
+            msg_box.Title := "KeyChord Mappings for: " A_ThisHotkey 
             msg_box.SetFont("s11", "Lucida Console")
+            msg_box.AddText("X8 Y8", A_ThisHotkey)
 
-            ParseKeyChord(keymap, 0)
+            ParseKeyChord(keymap, 1)
 
             ok_btn := msg_box.AddButton("Default w80 X8 Y+5", "&OK")
             ok_btn.OnEvent("Click", (*) => msg_box.Destroy())
@@ -354,21 +341,19 @@ class KeyChord extends Map
 
                 for key, action in keymap
                 {
-                    yVal := ((A_Index == 1) && (level == 0) ? 8 : 5) ; Used for an 8px gap above the first line, then 5px between each subsequent line
-
                     if action.Command is KeyChord
-                        msg_box.AddText("W" wVal " X" xVal " Y+" yVal " cRed", key) ; KeyChord keys are Red
+                        msg_box.AddText("W" wVal " X" xVal " Y+5 cRed", key) ; KeyChord keys are Red
                     else
-                        msg_box.AddText("W" wVal " X" xVal " Y+" yVal " cBlue", key) ; Action keys are Blue
+                        msg_box.AddText("W" wVal " X" xVal " Y+5 cBlue", key) ; Action keys are Blue
 
-                    msg_box.AddText("YP X+2", ": " action.Description) ; Description is black
+                    if action.Description == "Description not set."
+                        msg_box.AddText("YP X+2 c949494", ": " action.Description) ; Unset descriptions are gray
+                    else
+                        msg_box.AddText("YP X+2 cBlack", ": " action.Description) ; Set descriptions are black
                     
                     ; If the Action has a description and is a KeyChord, increase the level and recursively iterate through that as well.
                     if (action.HasOwnProp("Description") && action.Command is KeyChord)
-                    {
-                        level += 1 ; 
-                        ParseKeyChord(action.Command, level)
-                    }
+                        ParseKeyChord(action.Command, ++level)
                 }
             }
         }
