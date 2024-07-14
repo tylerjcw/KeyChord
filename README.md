@@ -113,6 +113,45 @@ Credit for the `__Enum` and `__Item` methods goes to [Descolada](https://github.
 
 ___
 
+  Setting `KeyChord.Action.Description` while `KeyChord.RemindKeys` is `True` (default) will display a message box like the following if the input times out:
+  
+  ![Screenshot 2024-07-14 031452](https://github.com/user-attachments/assets/620f1aec-521e-4d6b-9100-7ae163e06e46)
+
+  Code that produced the above screenshot:
+
+```ahk
+#Requires AutoHotKey v2.0
+
+#Include <KeyChord>
+
+^#z::KeyChord(3,
+    "9", {
+        Command: Run.Bind("notepad.exe"),
+        Condition: () => (A_Hour >= 12),
+        Description: "Open Notepad, but only after Noon." },
+    "j", {
+        Description: "Test Sub-KeyChord",
+        Command: KeyChord(3,
+            "h", {
+                Command: Run.Bind("notepad.exe"),
+                Description: "Open Notepad" },
+            "4", {
+                Command: Run.Bind("calc.exe"),
+                Condition: () => WinActive("ahk_exe notepad.exe"),
+                Description: "Open Calculator" },
+            "x", {
+                Command: Run.Bind("mspaint.exe"),
+                Description: "Open Paint" } ) },
+    "b", {
+        Command: Run.Bind("calc.exe"),
+        Condition: () => (A_Hour < 12),
+        Description: "Open Calculator, but only before Noon." },
+    "1", { Command: Run.Bind("mspaint.exe") },
+).Execute()
+```
+
+___
+
 ## Instructions
 
 ### Adding key-command mappings
