@@ -142,8 +142,11 @@ class KeyChord extends Map
     /**
      *  Execute the KeyChord. Collect user input and react accordingly. 
     **/
-    Execute()
+    Execute(parent_key?)
     {
+        if !(IsSet(parent_key))
+            parent_key := ""
+
         keyString := ""
         for key, value in this
         {
@@ -159,7 +162,7 @@ class KeyChord extends Map
         if (input == "")
         {
             if this.RemindKeys
-                KeyChordMsgBox(this)
+                KeyChordMsgBox(this, parent_key)
 
             TimedToolTip("Error: No input received.")
             return False
@@ -171,7 +174,7 @@ class KeyChord extends Map
 
         if (this.Has(input) || this.Has(unsidedInput))
         {
-            this.Get(input).Execute()
+            this.Get(input).Execute(parent_key ", " input)
             return True
         }
         else
@@ -180,7 +183,7 @@ class KeyChord extends Map
             {
                 if (MatchWildcard(key, input) || MatchWildcard(key, unsidedInput))
                 {
-                    action.Execute(this.Timeout)
+                    action.Execute(parent_key ", " input)
                     return True
                 }
             }
@@ -316,13 +319,13 @@ class KeyChord extends Map
             return false
         }
 
-        KeyChordMsgBox(keymap)
+        KeyChordMsgBox(keymap, parent_key?)
         {
             msg_box := Gui()
             msg_box.Opt("+ToolWindow +AlwaysOnTop -Resize")
-            msg_box.Title := "KeyChord Mappings for: " A_ThisHotkey 
+            msg_box.Title := "KeyChord Mappings for: " A_ThisHotkey parent_key
             msg_box.SetFont("s11", "Lucida Console")
-            msg_box.AddText("X8 Y8", A_ThisHotkey)
+            msg_box.AddText("X8 Y8", A_ThisHotkey parent_key)
 
             ParseKeyChord(keymap, 1)
 
@@ -419,7 +422,7 @@ class KeyChord extends Map
          * 
          *  @param timeout {Integer} The timeout value for the action.
         **/
-        Execute()
+        Execute(key)
         {
             EvaluateCondition(value)
             {
@@ -444,7 +447,7 @@ class KeyChord extends Map
                 switch Type(this.Command)
                 {
                     Case "KeyChord":
-                        this.Command.Execute()
+                        this.Command.Execute(key)
                         return
                     Case "String", "Integer", "Boolean", "Number", "Float":
                         Send(this.Command)
