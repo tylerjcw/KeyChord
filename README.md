@@ -158,7 +158,7 @@ exampleChord := KeyChord()
 exampleChord.RemindKeys := False
 ```
 
-To turn this off by _default_, open `KeyChord.ahk`, and right at the top you will see two values with descriptions (`Timeout` and `RemindKeys`) these are the only two Default-Controlling options, modify them how you will. They will affect ALL new KeyChord instances.
+To turn this off by _default_, open `KeyChord.ahk`, and right at the top you will see two values with descriptions (`Timeout` and `RemindKeys`) these are the only two Default-Controlling options, modify them how you will. They will affect _ALL_ KeyChord instances globally.
 
 ___
 
