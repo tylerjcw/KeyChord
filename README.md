@@ -151,14 +151,14 @@ ___
 ```
 
 This behavior is on by default.
-To turn it off on a per-KeyChord basis, set the KeyChord's `RemindKeys` property to false:
+To turn it off on a _Per-KeyChord_ basis, set the KeyChord's `RemindKeys` property to false:
 
 ```ahk
 exampleChord := KeyChord()
 exampleChord.RemindKeys := False
 ```
 
-To turn this off by default, open `KeyChord.ahk`, and right at the top you will see two values with descriptions (`Timeout` and `RemindKeys`) these are the only two Default-Controlling options, modify them how you will. They will affect ALL new KeyChord instances.
+To turn this off by _default_, open `KeyChord.ahk`, and right at the top you will see two values with descriptions (`Timeout` and `RemindKeys`) these are the only two Default-Controlling options, modify them how you will. They will affect ALL new KeyChord instances.
 
 ___
 
