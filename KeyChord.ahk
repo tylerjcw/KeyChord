@@ -189,6 +189,7 @@ class KeyChord extends Map
             }
         }
 
+        ; Shows a tooltip for an optional amount of seconds (default 3), then hides it.
         TimedToolTip(text, duration?) => ( ToolTip(text), SetTimer(() => ToolTip(), -(IsSet(duration) ? 1000 * duration : 3000)) )
 
         GetUserInput(timeout := 0)
@@ -322,16 +323,18 @@ class KeyChord extends Map
         KeyChordMsgBox(keymap, parent_key?)
         {
             msg_box := Gui()
-            msg_box.Opt("+ToolWindow +AlwaysOnTop -Resize")
+            msg_box.Opt("+ToolWindow +AlwaysOnTop -Resize") ; Set the GUI options
             msg_box.Title := "KeyChord Mappings for: " A_ThisHotkey parent_key
-            msg_box.SetFont("s11", "Lucida Console")
-            msg_box.AddText("X8 Y8", A_ThisHotkey parent_key)
+            msg_box.SetFont("s11", "Lucida Console") ; Set the font and size for the GUI
+            msg_box.AddText("X8 Y8", A_ThisHotkey parent_key) ; Show "parent" key string
 
-            ParseKeyChord(keymap, 1)
+            ParseKeyChord(keymap, 1) ; Recursively parse the KeyChord and dynamically add the Text elements to the GUI
 
-            ok_btn := msg_box.AddButton("Default w80 X8 Y+5", "&OK")
-            ok_btn.OnEvent("Click", (*) => msg_box.Destroy())
-            msg_box.Show()
+            msg_box.Show("AutoSize Hide") ; "Show" the GUI but keep it hidden, so we can get it's width
+            msg_box.GetPos(,,&w,) ; Get the GUI's width
+            ok_btn := msg_box.AddButton("Default w80 X" w - 80 " Y+5", "&OK") ; Add the button aligned to the right edge of the GUI
+            ok_btn.OnEvent("Click", (*) => msg_box.Destroy()) ; Destroy the GUI when the button is clicked
+            msg_box.Show("AutoSize") ; Resize the GUI and unhide it.
 
             ParseKeyChord(keymap, level)
             {
@@ -355,6 +358,7 @@ class KeyChord extends Map
                         msg_box.AddText("YP X+2 cBlack", ": " action.Description) ; Set descriptions are black
                     
                     ; If the Action has a description and is a KeyChord, increase the level and recursively iterate through that as well.
+                    ; when the recursive call returns decrease the level by one.
                     if (action.HasOwnProp("Description") && action.Command is KeyChord)
                     {
                         ParseKeyChord(action.Command, ++level)
