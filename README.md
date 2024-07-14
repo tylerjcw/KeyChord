@@ -30,6 +30,8 @@
 
 KeyChord is a class for AutoHotkey v2 that allows you to create complex key chords (key sequences, key chains, whatever you want to call them). It enables you to bind multiple actions to a series of keystrokes, creating a flexible and customizable hotkey system. KeyChord extends the `Map` class, and as such all of it's methods and properties are available, and they can be enumerated.
 
+Credit for the `__Enum` and `__Item` methods goes to [Descolada](https://github.com/Descolada).
+
 ## Features
 
 - Create nested key chord sequences
@@ -94,13 +96,15 @@ KeyChord is a class for AutoHotkey v2 that allows you to create complex key chor
 - #### KeyChord.Action Constructor
 
   `KeyChord.Action(command, condition := True)`
-  - `command`: The action to perform
-  - `condition`: An optional condition that must evaluate to `True` for the action to execute
+  - `command`: The action to perform.
+  - `condition`: An optional condition that must evaluate to `True` for the action to execute.
+  - `description`: An optional short description of the action.
 
 - #### KeyChord.Action Properties
 
-  - `Command`: The action to perform
-  - `Condition`: The condition for execution
+  - `Command`: The action to perform.
+  - `Condition`: The condition for execution.
+  - `Description`: Set this to a short description of what the key does. Displayed in the GUI that shows when `KeyChord.RemindKeys` is set to `True`.
 
 - #### KeyChord.Action Methods
 
@@ -133,22 +137,29 @@ Because `KeyChord.Action` is just a fancy object that has the properties `Comman
 
 myKeyChord := KeyChord(3,
     "c", {
-        Condition: () => WinActive("ahk_exe Code.exe"),
-        Command:   () => Run("calc.exe") },
+        Command:     () => Run("calc.exe"),
+        Condition:   () => WinActive("ahk_exe Code.exe"),
+        Description: "Run Calculator (if VS Code is open) },
     "s", {
-        Condition: SomeFunction.Bind(arg1, arg2, arg3),
-        Command:   SomeOtherFunction.Bind() },
+        Command:     SomeOtherFunction.Bind(),
+        Condition:   SomeFunction.Bind(arg1, arg2, arg3),
+        Description: Do Something, if another thing is true },
     "d", KeyChord(3,
         "d", {
-            Condition: () => True,
-            Command:   Send.Bind(FormatTime(A_Now, "MM/dd/yy")) },
+            Command:     Send.Bind(FormatTime(A_Now, "MM/dd/yy")),
+            Condition:   () => True,
+            Description: "Send the current date" },
         "t", {
-            Condition: () => (A_Hour < 12),
-            Command:   Send.Bind(FormatTime(A_Now, "hh:mm tt")) }),
+            Command:     Send.Bind(FormatTime(A_Now, "hh:mm tt")) }),
+            Condition:   () => (A_Hour < 12),
+            Description: "Send the current time (before noon)" },
     "o", {
-        Condition: () => WinActive("ahk_exe wordpad.exe"),
-        Command:   "Typing, in WordPad." },
+        Command:     "Typing, in WordPad.",
+        Condition:   () => WinActive("ahk_exe wordpad.exe"),
+        Description: "Sends `"Typing in WordPad`"" },
 )
+
+myKeyChord.RemindKeys := True ; Set this to true to get a MsgBox displaying your keys and their descriptions, if the input times out.
 
 ^#k::myKeyChord.Execute()
 ```

@@ -233,7 +233,7 @@ class KeyChord extends Map
             {
                 tempKey := "{" tempKey "}"
                 endKeys .= tempKey
-            }
+            } ; Adds curly braces to the keys in the array above, so they match the correct syntax expected by EndKeys
 
             key := InputHook("L1 T" timeout, endKeys) ; Create a one character input hook, with the timeout and endKeys passed by the user
             key.KeyOpt("{All}", "S")  ; Suppress all keys
@@ -273,22 +273,6 @@ class KeyChord extends Map
 
         MatchWildcard(pattern, input)
         {
-            MatchModifiers(patternMods, inputMods)
-            {
-                ; If pattern has no sided modifiers, ignore sides in input
-                if (!RegExMatch(patternMods, "[<>]"))
-                {
-                    patternMods := RegExReplace(patternMods, "[<>]", "")
-                    inputMods := RegExReplace(inputMods, "[<>]", "")
-                }
-
-                ; Sort modifiers to ensure consistent order
-                patternMods := Sort(patternMods)
-                inputMods := Sort(inputMods)
-
-                return (patternMods == inputMods)
-            }
-
             if (pattern == input)
                 return true
 
@@ -306,6 +290,7 @@ class KeyChord extends Map
             ; Escape special regex characters except * and ?
             pattern := RegExReplace(pattern, "([\\.\^$+\[\]\(\)\{\}|])", "\$1")
 
+            ; Look for * and ? wildcard characters
             if (InStr(pattern, "*") || InStr(pattern, "?"))
             {
                 pattern := StrReplace(pattern, "*", ".*")
@@ -313,6 +298,7 @@ class KeyChord extends Map
                 return MatchModifiers(patternModifiers, inputModifiers) && RegExMatch(input, "^" . pattern . "$")
             }
 
+            ; Look for range characters
             if (InStr(pattern, "-"))
             {
                 parts := StrSplit(pattern, "-")
@@ -323,6 +309,22 @@ class KeyChord extends Map
                     inputChar := Ord(input)
                     return MatchModifiers(patternModifiers, inputModifiers) && (inputChar >= start && inputChar <= end)
                 }
+            }
+
+            MatchModifiers(patternMods, inputMods)
+            {
+                ; If pattern has no sided modifiers, ignore sides in input
+                if (!RegExMatch(patternMods, "[<>]"))
+                {
+                    patternMods := RegExReplace(patternMods, "[<>]", "")
+                    inputMods := RegExReplace(inputMods, "[<>]", "")
+                }
+
+                ; Sort modifiers to ensure consistent order
+                patternMods := Sort(patternMods)
+                inputMods := Sort(inputMods)
+
+                return (patternMods == inputMods)
             }
 
             return false
@@ -337,32 +339,34 @@ class KeyChord extends Map
 
             ParseKeyChord(keymap, 0)
 
-            ok_btn := msg_box.AddButton("Default w80 X+-80 Y+3", "&OK")
+            ok_btn := msg_box.AddButton("Default w80 X8 Y+5", "&OK")
             ok_btn.OnEvent("Click", (*) => msg_box.Destroy())
             msg_box.Show()
 
             ParseKeyChord(keymap, level)
             {
-                longest_key_length := 0
+                wVal := 0
+                xVal := ((level * 40) + 10) ; Ensure correct indentation for Sub-KeyChords
 
                 for key in keymap
-                    if StrLen(key) > longest_key_length
-                        longest_key_length := StrLen(key)
+                    if StrLen(key) > wVal
+                        wVal := 9 * StrLen(key) ; Gets the longest Key string in the KeyChord, this way we can ensure even placement of all descriptions
 
                 for key, action in keymap
                 {
-                    if action.Command is KeyChord
-                        key_lbl := msg_box.AddText("w" 9 * longest_key_length " X" ((level * 40) + 10) " Y+12 Readonly cRed", key)
-                    else
-                        key_lbl := msg_box.AddText("w" 9 * longest_key_length " X" ((level * 40) + 10) " Y+12 Readonly cBlue", key)
+                    yVal := ((A_Index == 1) && (level == 0) ? 8 : 5) ; Used for an 8px gap above the first line, then 5px between each subsequent line
 
-                    key_lbl.GetPos(, &y, &width,)
-                    ;MsgBox("Key: " key "`nWidth: " width)
-                    msg_box.AddText("Y" y " X+2", ": " action.Description)
+                    if action.Command is KeyChord
+                        msg_box.AddText("W" wVal " X" xVal " Y+" yVal " cRed", key) ; KeyChord keys are Red
+                    else
+                        msg_box.AddText("W" wVal " X" xVal " Y+" yVal " cBlue", key) ; Action keys are Blue
+
+                    msg_box.AddText("YP X+2", ": " action.Description) ; Description is black
                     
+                    ; If the Action has a description and is a KeyChord, increase the level and recursively iterate through that as well.
                     if (action.HasOwnProp("Description") && action.Command is KeyChord)
                     {
-                        level += 1
+                        level += 1 ; 
                         ParseKeyChord(action.Command, level)
                     }
                 }
@@ -396,7 +400,7 @@ class KeyChord extends Map
          *  @param {Any} command The command to be executed when the Action is executed.
          *  @param {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} [Condition=True] The condition that must be met in order to execute the command.
          */
-        __New(command, condition, description:= "Description not set")
+        __New(command, condition := True, description := "Description not set")
         {
             switch Type(command)
             {
