@@ -353,7 +353,10 @@ class KeyChord extends Map
                     
                     ; If the Action has a description and is a KeyChord, increase the level and recursively iterate through that as well.
                     if (action.HasOwnProp("Description") && action.Command is KeyChord)
+                    {
                         ParseKeyChord(action.Command, ++level)
+                        --level
+                    }
                 }
             }
         }
