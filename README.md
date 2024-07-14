@@ -207,7 +207,7 @@ myKeyChord := KeyChord(3,
         Description: "Sends `"Typing in WordPad`"" },
 )
 
-myKeyChord.RemindKeys := True ; Set this to true to get a MsgBox displaying your keys and their descriptions, if the input times out.
+myKeyChord.RemindKeys := False ; When True (default): displays a window with a list of the current KeyChord's mappings and any "perent" keys used to get there (if a Sub-KeyChord).
 
 ^#k::myKeyChord.Execute()
 ```
