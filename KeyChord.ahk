@@ -36,19 +36,26 @@
 **/
 class KeyChord extends Map
 {
-    RemindKeys := False ; If you want to change the default behavior of this option, this is where you do it
-    Timeout := 3
+    ; Timeout value for user input before the InputHook stops listening for key presses
+    Timeout := 3 ; Change this to change the default timeout value of all newly created KeyChords (value is in seconds)
+
+    ; Set this to true to have descriptive key rimnder message boxes show when no input is received before the timeout
+    RemindKeys := False ; Set to true to have descriptive key reminder Message boxes on by default
 
     /**
-     *  Initializes a new instance of the KeyChord class with the specified default timeout.
-     *  
+     *  Initializes a new instance of the KeyChord class with the specified timeout (default 3 seconds).
      *  @param {Integer} timeout The default timeout in seconds for key chord input. Must be greater than 0.
      *  @param args* Additional arguments to pass to the Map constructor.
     **/
     __New(timeout?, args*)
     {
+        this._orderedList := []
+        
         if IsSet(timeout)
         {
+            if (Mod(args.Length, 2) != 0)
+                throw Error("Invalid number of arguments to KeyChord constructor")
+
             if !(timeout is Integer)
                 throw ValueError("Argument must be an Integer", -1,"timeout: <" Type(timeout) ">")
             else if (timeout <= 0)
@@ -57,20 +64,76 @@ class KeyChord extends Map
                 this.Timeout := timeout
         }
 
-        for index, arg in args
+        Loop args.Length // 2
+            this[args[(A_index * 2) - 1]] := args[A_Index * 2]
+    }
+
+    ; Thank you to @Descolada on the AHK Discord for __Item and __Enum. I was looking for a
+    ; solution to this problem (an ordered map), and I stumbled across a post where he provided
+    ; a solution to someone else who wanted the same thing.
+
+    /**
+     * Gets or Sets an Item in the Map.
+     * @param name The key to get the value of.
+     * @returns {Any} The value of the key.
+     */
+    __Item[name]
+    {
+        get => this.Get(name)
+
+        set
         {
-            if (Mod(index, 2) == 0)
-                continue
-    
-            key := arg
-            action := args[index + 1]
-    
-            this.Set(key, action)
+            if !this.Has(name)
+                this._orderedList.Push(name)
+            this.Set(name, value)
         }
     }
 
     /**
-     * 
+     * Defines how the KeyChord should be enumerated
+     * @param num The number of variables passed
+     * @returns {KeyChord#__Enum~single | KeyChord#__Enum~pair} 
+     */
+    __Enum(num)
+    {
+        i := 0, len := this._orderedList.Length
+
+        single(&x)
+        {
+            if ++i > len
+                return False
+            x := this._orderedList[i]
+            return True
+        }
+
+        pair(&x, &y)
+        {
+            if ++i > len
+                return False
+            x := this._orderedList[i]
+            y := this.Get(x)
+            return True
+        }
+
+        return num == 1 ? single : pair
+    }
+
+    /**
+     *  Initializes a new instance of the KeyChord class with the specified timeout (default 3 seconds).
+     *  @param {Integer} timeout The default timeout in seconds for key chord input. Must be greater than 0.
+     *  @param args* Additional arguments to pass to the Map constructor.
+    **/
+    Call(timeout?, args*)
+    {
+        if IsSet(timeout)
+            this.Timeout := timeout
+
+        if (args.Length > 0)
+            return KeyChord(timeout, args)
+    }
+
+    /**
+     *  Sets a key-action pair in the KeyChord
      *  @param key The key which the user will press to execute `action`
      *  @param action The action to execute when the user presses `key`
     **/
@@ -96,7 +159,7 @@ class KeyChord extends Map
     Execute()
     {
         keyString := ""
-        for key in this
+        for key, value in this
         {
             if (A_Index > 1)
                 keyString .= ", "
@@ -110,9 +173,7 @@ class KeyChord extends Map
         if (input == "")
         {
             if this.RemindKeys
-            {
-                MonoMsgBox(ParseDescriptions(this, 1, "`n" A_ThisHotkey "`n")) ;, "KeyChord Mappings", "O Iconi 4096")
-            }
+                KeyChordMsgBox(this)
 
             TimedToolTip("Error: No input received.")
             return False
@@ -267,57 +328,44 @@ class KeyChord extends Map
             return false
         }
 
-        ParseDescriptions(keychord, level, key_descriptions_string := "") ; ┬└─┐┴
-        {
-            for key, action in keychord
-            {
-                if (action.HasOwnProp("Description"))
-                {
-                    description := action.Description
-
-                    if (Type(action.Command) == "KeyChord")
-                    {
-                        if IsSet(description)
-                            key_descriptions_string .= RepStr("   ", level) . key "  -  " description "`n"
-                        else
-                            key_descriptions_string .= RepStr("   ", level) . key "  -  Description Not Set`n"
-
-                        key_descriptions_string := ParseDescriptions(action.Command, level + 1, key_descriptions_string)
-                    }
-                    else
-                    {
-                        if IsSet(description)
-                            key_descriptions_string .= RepStr("   ", level) . key "  -  " description "`n"
-                        else
-                            key_descriptions_string .= RepStr("   ", level) . key "  -  Description Not Set`n"
-                    }
-                }
-            }
-
-            RepStr(str, count)
-            {
-                result := ""
-                Loop(count)
-                    result .= str
-                return result
-            }
-
-            return key_descriptions_string
-        }
-
-        MonoMsgBox(message)
+        KeyChordMsgBox(keymap)
         {
             msg_box := Gui()
+            msg_box.Opt("+ToolWindow +AlwaysOnTop -Resize")
             msg_box.Title := "KeyChord Mappings"
             msg_box.SetFont("s11", "Lucida Console")
-            msg_text := msg_box.AddText(, message)
-            ok_btn := msg_box.AddButton("Default w80 X+-80 Y+0", "&OK")
-            ok_btn.OnEvent("Click", Destroy)
+
+            ParseKeyChord(keymap, 0)
+
+            ok_btn := msg_box.AddButton("Default w80 X+-80 Y+3", "&OK")
+            ok_btn.OnEvent("Click", (*) => msg_box.Destroy())
             msg_box.Show()
-            
-            Destroy(*)
+
+            ParseKeyChord(keymap, level)
             {
-                msg_box.Destroy()
+                longest_key_length := 0
+
+                for key in keymap
+                    if StrLen(key) > longest_key_length
+                        longest_key_length := StrLen(key)
+
+                for key, action in keymap
+                {
+                    if action.Command is KeyChord
+                        key_lbl := msg_box.AddText("w" 9 * longest_key_length " X" ((level * 40) + 10) " Y+12 Readonly cRed", key)
+                    else
+                        key_lbl := msg_box.AddText("w" 9 * longest_key_length " X" ((level * 40) + 10) " Y+12 Readonly cBlue", key)
+
+                    key_lbl.GetPos(, &y, &width,)
+                    ;MsgBox("Key: " key "`nWidth: " width)
+                    msg_box.AddText("Y" y " X+2", ": " action.Description)
+                    
+                    if (action.HasOwnProp("Description") && action.Command is KeyChord)
+                    {
+                        level += 1
+                        ParseKeyChord(action.Command, level)
+                    }
+                }
             }
         }
     }
@@ -325,7 +373,8 @@ class KeyChord extends Map
     /**
      *  Represents an action that can be executed as part of a KeyChord.
      *  
-     *  An Action encapsulates a command and an optional condition that must be met in order to execute the command.
+     *  An Action encapsulates a command, an optional condition that must be met in order to
+     *  execute the command, and a short description of what the key will do when pressed.
      *  
      *  @constructor `Action(command, condition := True)`
      *  @property {KeyChord|Action|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} Command The command to be executed when the Action is executed.
