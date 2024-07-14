@@ -82,7 +82,6 @@ Credit for the `__Enum` and `__Item` methods goes to [Descolada](https://github.
       - Executes the KeyChord, waiting for user input
       - `timeout`: The timeout for user input in seconds
   - Inherited:
-    - [`Call`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Call) (`static`): Creates a KeyChord and sets items.
     - [`Clear`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Clear): Removes all key-value pairs from a KeyChord.
     - [`Clone`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Clone): Returns a shallow copy of a KeyChord.
     - [`Delete`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Delete): Removes a key-value pair from a KeyChord.
