@@ -113,7 +113,7 @@ Credit for the `__Enum` and `__Item` methods goes to [Descolada](https://github.
 
 ___
 
-  Setting `KeyChord.Action.Description` while `KeyChord.RemindKeys` is `True` (default) will display a message box like the following if the input times out:
+  Setting `KeyChord.Action.Description` while `KeyChord.RemindKeys == True` (default) will display a message box like the following if the input times out:
   
   ![Screenshot 2024-07-14 031452](https://github.com/user-attachments/assets/620f1aec-521e-4d6b-9100-7ae163e06e46)
 
