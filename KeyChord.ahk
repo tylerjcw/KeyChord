@@ -4,7 +4,7 @@
  *  A class for writing key chords in AutoHotKey.
  *  Now combinations like "Ctrl+Win+d, x, u" are supported!
  *  
- *  @version 1.35
+ *  @version 1.4
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://autohotkey.com/boards/viewtopic.php?f=83&t=131037
  *  @license
@@ -31,7 +31,8 @@
  *  It allows for executing commands or nested key Chords based on user input.
  *  
  *  @constructor `KeyChord(timeout?)`
- *  @property {Integer} [Timeout=3] The default timeout (in seconds) for user input..
+ *  @property {Integer} [Timeout=3] The default timeout (in seconds) for user input.
+ *  @property {Boolean} [RemindKeys=True] If True, displays a helpful Key Reminder Message box when the InputHook times out.
  *  @method `Execute()`: `Void` Execute the keychord.
 **/
 class KeyChord extends Map
@@ -96,7 +97,8 @@ class KeyChord extends Map
      */
     __Enum(num)
     {
-        i := 0, len := this._orderedList.Length
+        i := 0
+        len := this._orderedList.Length
 
         single(&x)
         {
@@ -362,7 +364,7 @@ class KeyChord extends Map
                     if (action.HasOwnProp("Description") && action.Command is KeyChord)
                     {
                         ParseKeyChord(action.Command, ++level)
-                        --level
+                        --level ; Decrease the level by one to ensure proper indentation
                     }
                 }
             }
