@@ -9,22 +9,13 @@
     - [KeyChord Constructor](#keychord-constructor)
     - [KeyChord Properties](#keychord-properties)
     - [KeyChord Methods](#keychord-methods)
-  - [2. KeyChord.Action Class](#2-keychordaction-class)
-    - [KeyChord.Action Constructor](#keychordaction-constructor)
-    - [KeyChord.Action Properties](#keychordaction-properties)
-    - [KeyChord.Action Methods](#keychordaction-methods)
-- [Instructions](#instructions)
-  - [Adding key-command mappings](#adding-key-command-mappings)
-  - [Executing a KeyChord](#executing-a-keychord)
-  - [Advanced Declaration Syntax](#advanced-declaration-syntax)
-- [Examples](#examples)
-  - [1. Basic KeyChord usage](#1-basic-keychord-usage)
-  - [2. Nested KeyChords](#2-nested-keychords)
-  - [3. Using default constructor](#3-using-default-constructor)
-  - [4. Using conditions with KeyChord.Action](#4-using-conditions-with-keychordaction)
-  - [5. Using wildcards](#5-using-wildcards)
-  - [6. Combining features with conditions and wildcard patterns](#6-combining-features-with-conditions-and-wildcard-patterns)
-  - [7. Using Custom Functions with the KeyChord Class](#7-using-custom-functions-with-the-keychord-class)
+  - [2. KCAction Class](#2-kcaction-class)
+    - [KCAction Constructor](#kcaction-constructor)
+    - [KCAction Properties](#kcaction-properties)
+    - [KCAction Methods](#kcaction-methods)
+  - [3. KCManager Class](#3-kcmanager-class)
+    - [KCManager Methods](#kcmanager-methods)
+    - [KCManager.BlockingOverlay Subclass](#kcmanagerblockingoverlay-subclass)
 
 ## Introduction
 
@@ -37,6 +28,7 @@ Credit for the `__Enum` and `__Item` methods goes to [Descolada](https://github.
 - Create nested key chord sequences
 - Support for various types of actions (strings, numbers, functions, and nested KeyChords, to name a few)
 - Customizable timeout for key input
+- Mouse Button support (`Lbutton`, `RButton`, `XButton1`, etc...)
 - Conditional actions. Only executed if the attached condition is true.
   - Conditions can be any valid expression that evaluates to true or false.
   - Conditions can not be set on hotkeys that fire a nested KeyChord. This is a known limitation, and I may fix this in the future.
@@ -51,388 +43,395 @@ Credit for the `__Enum` and `__Item` methods goes to [Descolada](https://github.
     - This matches based on the numeric character code (Ord), so any ASCII range where `Ord(a) <= Ord(b)` is valid.
     - `:-@` would match any of the following characters: `:`, `;`, `<`, `=`, `>`, `?`, `@` (ASCII Range 58-64).
     - [ASCII Character Table](https://www.ascii-code.com/ASCII)
+- Useful Help window that can be attached to a hotkey.
+- KeyChord class is fully enumerable, returning up to 5 values.
+- `KeyChord.Transform(func)` function provides a powerful way to modify your KeyChords.
 
 ## Classes
 
 ### 1. KeyChord Class
 
-`class KeyChord extends`[`Map`](https://www.autohotkey.com/docs/v2/lib/Map.htm)
+`class KeyChord`
 
 - #### KeyChord Constructor
 
-  `KeyChord(timeout?, args*)`
-  - `timeout` : The default timeout (in seconds) for user input, optional. Defaults to 3 seconds.
-  - `args*` : List of Key - Command Mappings (same syntax as Map or Map.Call). If no `args*` are passed, the KeyChord will be empty.
+  `KeyChord(actions*)`
+  - `actions*`: A list of KCAction objects to add to the KeyChord, optional
+
+  ```ahk
+  exampleChord := KeyChord(
+      KCAction("^a", Send.Bind("^a"), True, "Select all"),
+      KCAction("^c", Send.Bind("^c"), True, "Copy")
+  )
+
+  exampleChord := KeyChord({
+      Key: "^a",
+      Command: () => Send("^a"),
+      Condition: True,
+      Description: "Select all" },
+  {
+      Key: "^c",
+      Command: Send.Bind("^c"),
+      Condition: True,
+      Description: "Copy" }
+  )
+  ```
 
 - #### KeyChord Properties
 
   - Native:
-    - `Timeout`: The timeout (in seconds) for user input, default is 3 seconds.
-  - Inherited:
-    - [`Count`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Count): Retrieves the number of key-value pairs present.
-    - [`Capacity`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Capacity): Retrieves or sets the current capacity of a KeyChord.
-    - [`CaseSense`](https://www.autohotkey.com/docs/v2/lib/Map.htm#CaseSense): Retrieves or sets a map's case sensitivity setting. (Reccomended not to touch this)
-    - [`Default`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Default): Defines the default value returned when a key is not found.
-    - [`__Item`](https://www.autohotkey.com/docs/v2/lib/Map.htm#__Item): Retrieves or sets the value of a key-value pair.
+    - `RemindKeys`: Whether to remind the user of the keys in the KeyChord
+    - `Length`: The number of actions in the KeyChord
 
 - #### KeyChord Methods
 
   - Native:
-    - `Execute(timeout := this.defaultTimeout)`
-      - Executes the KeyChord, waiting for user input
-      - `timeout`: The timeout for user input in seconds
-  - Inherited:
-    - [`Clear`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Clear): Removes all key-value pairs from a KeyChord.
-    - [`Clone`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Clone): Returns a shallow copy of a KeyChord.
-    - [`Delete`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Delete): Removes a key-value pair from a KeyChord.
-    - [`Get`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Get): Returns the value associated with a key, or a default value.
-    - [`Has`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Has): Returns true if the specified key has an associated value within a KeyChord.
-    - [`Set`](https://www.autohotkey.com/docs/v2/lib/Map.htm#Set): Sets zero or more items.
-    - [`__Enum`](https://www.autohotkey.com/docs/v2/lib/Map.htm#__Enum): Enumerates key-value pairs.
+    - `AddActions(actions*)`
+      - Adds one or more KCAction objects to the KeyChord
+      - `actions*`: The KCAction objects to add
 
-### 2. KeyChord.Action Class
+      ```ahk
+      exampleAction := KCAction("^m", Run.Bind("notepad"), () => (A_Hour > 12))
 
-- #### KeyChord.Action Constructor
+      exampleChord := KeyChord()
+      exampleChord.Add(exampleAction)
+      ```
 
-  `KeyChord.Action(command, condition := True)`
-  - `command`: The action to perform.
-  - `condition`: An optional condition that must evaluate to `True` for the action to execute.
-  - `description`: An optional short description of the action.
+    - `Set(key, action, condition := True, description := "Description not set.")`
+      - Sets a key-action pair in the KeyChord
+      - `key`: The key which the user will press to execute `action`
+      - `action`: The action to execute when the user presses `key`
+      - `condition`: A condition to evaluate before executing the action, optional
+      - `description`: A description of the action, optional
 
-- #### KeyChord.Action Properties
+      ```ahk
+      exampleChord := KeyChord()
+      exampleChord.Set("^s", "Save File", True, "Saves the current file")
+      ```
 
-  - `Command`: The action to perform.
-  - `Condition`: The condition for execution.
-  - `Description`: Set this to a short description of what the key does. Displayed in the GUI that shows when `KeyChord.RemindKeys` is set to `True`.
+    - `Get(key)`
+      - Gets a `KCAction` from the KeyChord, given a key
+      - `key`: The key to get the action for
+      - Returns: `KCAction` object
 
-- #### KeyChord.Action Methods
+      ```ahk
+      action := exampleChord.Get("^s")
+      MsgBox(action.Description)
+      ```
 
-  `Execute()`
-  - Evaluates the Condition and Executes the Command if the condition is true.
+    - `Has(key)`
+      - Checks if the KeyChord contains a key
+      - `key`: The key to check for
+      - Returns: Boolean
 
-___
+      ```ahk
+      if exampleChord.Has("^s")
+          MsgBox("Save action exists")
+      ```
 
-  Setting `KeyChord.Action.Description` while `KeyChord.RemindKeys == True` (default) will display a message box like the following if the input times out:
+    - `Remove(key)`
+      - Removes an action by key
+      - `key`: The key of the action to remove
+
+      ```ahk
+      exampleChord.Remove("^s")
+      ```
+
+    - `Clear()`
+      - Removes all actions from the KeyChord
+
+      ```ahk
+      exampleChord.Clear()
+      ```
+
+    - `Merge(keychords*)`
+      - Merges this KeyChord with other KeyChords
+      - `keychords*`: The KeyChords to merge with
+      - Returns: This KeyChord with merged actions
+
+      ```ahk
+      chord1 := KeyChord(KCAction("^a", "Select All"))
+      chord2 := KeyChord(KCAction("^c", "Copy"))
+      mergedChord := chord1.Merge(chord2)
+      ```
+
+    - `SortByKey()`
+      - Returns a new KeyChord with actions sorted by key
+      - Returns: New KeyChord with sorted actions
+
+      ```ahk
+      sortedChord := exampleChord.SortByKey()
+      ```
+
+    - `ValidateAll()`
+      - Validates all actions in the KeyChord
+      - Returns: Boolean indicating if all actions are valid
+
+      ```ahk
+      if exampleChord.ValidateAll()
+          MsgBox("All actions are valid")
+      ```
+
+    - `Clone()`
+      - Creates a deep copy of the KeyChord
+      - Returns: New KeyChord with copied actions
+
+      ```ahk
+      clonedChord := exampleChord.Clone()
+      ```
+
+    - `FindIndexes(comparisonFunc)`
+      - Finds indexes of actions that match a given comparison function
+      - `comparisonFunc`: A function that takes an action and returns true if it matches the criteria
+      - Returns: Array of indexes where matching actions are found
+
+      ```ahk
+      indexes := exampleChord.FindIndexes((action) => action.Key == "^s")
+      ```
+
+    - `FirstIndexOf(key)`
+      - Finds the index of the first occurrence of a key
+      - `key`: The key to search for
+      - Returns: Integer index of the first occurrence of the key, or 0 if not found
+
+      ```ahk
+      index := exampleChord.FirstIndexOf("^s")
+      ```
+
+    - `LastIndexOf(key)`
+      - Finds the index of the last occurrence of a key
+      - `key`: The key to search for
+      - Returns: Integer index of the last occurrence of the key, or 0 if not found
+
+      ```ahk
+      index := exampleChord.LastIndexOf("^s")
+      ```
+
+    - `AllIndexesOf(key)`
+      - Finds all indexes of a key
+      - `key`: The key to search for
+      - Returns: Array of all indexes where the key is found
+
+      ```ahk
+      indexes := exampleChord.AllIndexesOf("^s")
+      ```
+
+    - `Transform(func, filterMode := false)`
+      - Transforms the KeyChord by applying a function to each action
+      - `func`: The function to apply to each action
+      - `filterMode`: If true, filters out actions for which func returns false
+      - Returns: New KeyChord with transformed actions
+
+      ```ahk
+      transformedChord := exampleChord.Transform((action) => (action.Description .= " (modified)"))
+      ```
+
+    - `FindTrue(key)`
+      - Finds actions with true conditions for a given key
+      - `key`: The key to search for
+      - Returns: KeyChord with matching actions
+
+      ```ahk
+      trueActions := exampleChord.FindTrue("^s")
+      ```
+
+    - `FirstTrue(key)`
+      - Finds the first action with a matching key and true condition
+      - `key`: The key to match
+      - Returns: KCAction or undefined if none found
+
+      ```ahk
+      firstTrueAction := exampleChord.FirstTrue("^s")
+      ```
+
+    - `LastTrue(key)`
+      - Finds the last action with a matching key and true condition
+      - `key`: The key to match
+      - Returns: KCAction or undefined if none found
+
+      ```ahk
+      lastTrueAction := exampleChord.LastTrue("^s")
+      ```
+
+    - `GetCommandsByType(type)`
+      - Returns all commands of a specific type
+      - `type`: The type of commands to return
+      - Returns: Array of commands of the specified type
+
+      ```ahk
+      stringCommands := exampleChord.GetCommandsByType("String")
+      ```
+
+    - `ToString(indent := "")`
+      - Returns a string representation of the KeyChord, including nested KeyChords
+      - `indent`: The indentation string for formatting nested structures
+      - Returns: Formatted string representation of the KeyChord
+
+      ```ahk
+      chordString := exampleChord.ToString()
+      MsgBox(chordString)
+      ```
+
+  - Static:
+    - `MatchKey(pattern, input)`
+      - Matches a key pattern against an input
+      - `pattern`: The key pattern to match
+      - `input`: The input to match against
+      - Returns: Boolean indicating if the input matches the pattern
+
+      ```ahk
+      if KeyChord.MatchKey("^p-t", "^s")
+          MsgBox("Key matched!")
+      ```
+
+### 2. KCAction Class
+
+`class KCAction`
+
+- #### KCAction Constructor
+
+  `KCAction(key, command, condition?, description?)`
+
+  - `key` : The key or key combination that triggers the action.
+  - `command` : The command to execute when the action is triggered.
+  - `condition` : (Optional) A condition that must be true for the action to be executed.
+  - `description` : (Optional) A description of the action.
+
+  ```ahk
+  action := KCAction("a", () => MsgBox("A pressed"), () => true, "Press A to show message")
+  ```
+
+- #### KCAction Properties
+
+  - `Key`: The key or key combination that triggers the action.
+  - `Command`: The command to execute when the action is triggered.
+  - `Condition`: The condition that must be true for the action to be executed.
+  - `Description`: A description of the action.
+  - `ReadableKey`: A human-readable representation of the key.
   
-  ![Screenshot 2024-07-14 031452](https://github.com/user-attachments/assets/620f1aec-521e-4d6b-9100-7ae163e06e46)
-
-  Code that produced the above screenshot:
-
-```ahk
-#Requires AutoHotKey v2.0
-
-#Include <KeyChord>
-
-^#z::KeyChord(3,
-    "9", {
-        Command: Run.Bind("notepad.exe"),
-        Condition: () => (A_Hour >= 12),
-        Description: "Open Notepad, but only after Noon." },
-    "j", {
-        Description: "Test Sub-KeyChord",
-        Command: KeyChord(3,
-            "h", {
-                Command: Run.Bind("notepad.exe"),
-                Description: "Open Notepad" },
-            "4", {
-                Command: Run.Bind("calc.exe"),
-                Condition: () => WinActive("ahk_exe notepad.exe"),
-                Description: "Open Calculator" },
-            "x", {
-                Command: Run.Bind("mspaint.exe"),
-                Description: "Open Paint" } ) },
-    "b", {
-        Command: Run.Bind("calc.exe"),
-        Condition: () => (A_Hour < 12),
-        Description: "Open Calculator, but only before Noon." },
-    "1", { Command: Run.Bind("mspaint.exe") },
-).Execute()
-```
-
-This behavior is on by default.
-To turn it off on a _Per-KeyChord_ basis, set the KeyChord's `RemindKeys` property to false:
-
-```ahk
-exampleChord := KeyChord()
-exampleChord.RemindKeys := False
-```
-
-To turn this off by _default_, open `KeyChord.ahk`, and right at the top you will see two values with descriptions (`Timeout` and `RemindKeys`) these are the only two Default-Controlling options, modify them how you will. They will affect _ALL_ KeyChord instances globally.
-
-___
-
-## Instructions
-
-### Adding key-command mappings
-
-1. Using the `Set` method:
-    `chord.Set(key, action)`
-    - `key` is the key combination to map (e.g., "a", "^a", "#a", etc.).
-    - `action` can be a Boolean, String, Integer, Float, Number, Func, BoundFunc, Closure, Enumerator, KeyChord.Action, or a nested KeyChord instance.
-
-### Executing a KeyChord
-
-1. Using the `Execute` method:
-    `chord.Execute()`
-        - During the time that this function is executing (no pun intended), the User's Hotkeys will be Suspended to avoid any conflicts.
-
-### Advanced Declaration Syntax
-
-Because `KeyChord.Action` is just a fancy object that has the properties `Command` and `Condition`, we can pass an inline object declaration with those two properties to the class instead of declaring a new `KeyChord.Action` in our code. That part will be handled by the KeyChord class in this case. This leads to my favorite way to declare a KeyChord:
-
-```ahk
-#Include "KeyChord.ahk"
-
-myKeyChord := KeyChord(3,
-    "c", {
-        Command:     () => Run("calc.exe"),
-        Condition:   () => WinActive("ahk_exe Code.exe"),
-        Description: "Run Calculator (if VS Code is open) },
-    "s", {
-        Command:     SomeOtherFunction.Bind(),
-        Condition:   SomeFunction.Bind(arg1, arg2, arg3),
-        Description: Do Something, if another thing is true },
-    "d", KeyChord(3,
-        "d", {
-            Command:     Send.Bind(FormatTime(A_Now, "MM/dd/yy")),
-            Condition:   () => True,
-            Description: "Send the current date" },
-        "t", {
-            Command:     Send.Bind(FormatTime(A_Now, "hh:mm tt")) }),
-            Condition:   () => (A_Hour < 12),
-            Description: "Send the current time (before noon)" },
-    "o", {
-        Command:     "Typing, in WordPad.",
-        Condition:   () => WinActive("ahk_exe wordpad.exe"),
-        Description: "Sends `"Typing in WordPad`"" },
-)
-
-; When True (default): displays a window with a list of the current KeyChord's
-; mappings and any "parent" keys used to get there (if a Sub-KeyChord).
-myKeyChord.RemindKeys := False
-
-^#k::myKeyChord.Execute()
-```
-
-Or, for a more spread-out declaration (same thing, just adjusted braces and assigned the KeyChord right to the hotkey):
+    ```ahk
+    action := KCAction("^a", Run.Bind("notepad"))
+    MsgBox(action.Key)  ; Displays "^a"
+    MsgBox(action.ReadableKey)  ; Displays "Ctrl+a"
+    ```
+
+- #### KCAction Methods
+
+  - Native:
+    - `Execute(timeout?, parent_key?)`
+      - Executes the action.
+      - `timeout`: (Optional) The timeout for execution.
+      - `parent_key`: (Optional) The parent key string.
+
+      ```ahk
+      action.Execute(5, "Ctrl+a")  ; Executes the action with a 5-second timeout and "Ctrl+a" as the parent key
+      ```
+
+    - `IsTrue()`
+      - Checks if the condition for the action is true.
+      - Returns: `Boolean` - True if the condition is met, False otherwise.
+
+      ```ahk
+      if (action.IsTrue())
+          MsgBox("Action condition is true")
+      ```
+
+    - `ToString(indent?)`
+      - Returns a string representation of the action.
+      - `indent`: (Optional) The indentation string for formatting.
+      - Returns: `String` - A formatted string representation of the action.
+
+      ```ahk
+      MsgBox(action.ToString("  "))  ; Displays the action details with 2-space indentation
+      ```
+
+    - `static EqualsObject(obj)`
+      - Checks if an object is equivalent to a KCAction.
+      - `obj`: The object to compare.
+      - Returns: `Boolean` - True if the object is equivalent to a KCAction, False otherwise.
+
+      ```ahk
+      obj := {Key: "a", Command: () => MsgBox("A pressed"), Condition: () => true, Description: "Press A to show message"}
+      if (KCAction.EqualsObject(obj))
+          MsgBox("Object is equivalent to a KCAction")
+      ```
+
+### 3. KCManager Class
+
+`class KCManager`
+
+- #### KCManager Methods
+
+  - Native:
+
+    - `TimedToolTip(text, duration?)`
+      - Displays a timed tooltip
+      - `text`: The text to display
+      - `duration`: The duration to display the tooltip in seconds, optional. Defaults to 3 seconds.
+
+      ```ahk
+      KCManager.TimedToolTip("Hello, World!", 5)
+      ```
+
+    - `Execute(keychord, mode := 1, timeout := 3, parent_key := A_ThisHotkey)`
+      - Executes a KeyChord
+      - `keychord`: The KeyChord to execute
+      - `mode`: The execution mode (1: first, 2: last, 3: all), optional
+      - `timeout`: The timeout for execution in seconds, optional
+      - `parent_key`: The parent key string, optional
+      - Returns: Boolean indicating if execution was successful
+
+      ```ahk
+      myKeyChord := KeyChord()
+      myKeyChord.Set("a", () => MsgBox("A pressed"))
+      result := KCManager.Execute(myKeyChord, 1, 5)
+      ```
+
+    - `GetUserInput(timeout := 0)`
+      - Gets user input for a KeyChord
+      - `timeout`: The timeout for input in seconds
+      - Returns: String representing the user's input
+
+      ```ahk
+      userInput := KCManager.GetUserInput(5)
+      MsgBox("User pressed: " . userInput)
+      ```
+
+    - `Help(keychord, parent_key := A_ThisHotkey)`
+      - Displays help for a KeyChord
+      - `keychord`: The KeyChord to display help for
+      - `parent_key`: The parent key string, optional
+
+      ```ahk
+      myKeyChord := KeyChord()
+      myKeyChord.Set("a", () => MsgBox("A pressed"), , "Press A for message")
+      KCManager.Help(myKeyChord, "Ctrl+")
+      ```
+
+    - `ParseKey(key)`
+      - Parses a key string into a more readable format
+      - `key`: The key string to parse
+      - Returns: String representing the parsed key string
 
-```ahk
-#Include "KeyChord.ahk"
+      ```ahk
+      parsedKey := KCManager.ParseKey("^!a")
+      MsgBox("Parsed key: " . parsedKey)  ; Displays "Parsed key: Ctrl+Alt+a"
+      ```
 
-^#k::KeyChord(3,   
-    "c",
-        {
-            Condition: () => WinActive("ahk_exe Code.exe"),
-            Command:   () => Run("calc.exe"),
-        },
-    "s",
-        {
-            Condition: SomeFunction.Bind(arg1, arg2, arg3),
-            Command:   SomeOtherFunction.Bind(),
-        },
-    "d", KeyChord(, ;<= No, thats not a Typo, you can omit an argument for the timeout value and it will default to 3 seconds.
-        "d",
-            {
-                Condition: () => True,
-                Command:   Send.Bind(FormatTime(A_Now, "MM/dd/yy")),
-            },
-        "t",
-            {
-                Condition: () => (A_Hour < 12),
-                Command:   Send.Bind(FormatTime(A_Now, "hh:mm tt")),
-            },
-        ),
-    "o",
-        {
-            Condition: () => WinActive("ahk_exe wordpad.exe"),
-            Command:   "Typing, in WordPad.",
-        },
-).Execute()
-```
+- #### KCManager.BlockingOverlay Subclass
 
-You could assign the KeyChord directly to a hotkey, like we did in  the second example above, by calling `^#k::KeyChord.CreateFromMap(timeout, map).Execute()`. However, if you assign it directly to a hotkey, you won't be able to dynamically add and remove bindings to and from the KeyChord. So it's best to just assign the KeyChord instance to a variable, and then assign the variable to a hotkey, as in the first example above. When using the above declaration syntax be extra careful and make sure you have commas on the ends of all the lines you need them on. Forgetting one comma can lead to some weird errors.
+  - Native:
 
-___
+    - `Create()`
+      - Creates or returns the existing BlockingOverlay instance
 
-## Examples
+      ```ahk
+      KCManager.BlockingOverlay.Create()
+      ```
 
-### 1. Basic KeyChord usage
+    - `Destroy()`
+      - Destroys the BlockingOverlay instance
 
-```ahk
-#Include "KeyChord.ahk"
-
-myKeyChord := KeyChord(2)  ; Create a new KeyChord with a 2-second timeout
-
-myKeyChord.Set("c", Run.Bind("calc.exe"))
-myKeyChord.Set("n", Run.Bind("notepad.exe"))
-myKeyChord.Set("w", "Hello, World!")
-
-^!k::myKeyChord.Execute()  ; Ctrl+Alt+K triggers the KeyChord
-```
-
-In this example, pressing any of the following within 2 seconds after pressing Ctrl+Alt+k:
-
-- Pressing 'c' will launch the calculator
-- Pressing 'n' will launch Notepad
-- Pressing 'w' will type "Hello, World!"
-
-___
-
-### 2. Nested KeyChords
-
-```ahk
-#Include "KeyChord.ahk"
-
-mainChord := KeyChord(3) ; KeyChord with 3 second timeout
-subChord := KeyChord(2)  ; KeyChord with 2 second timeout
-
-subChord.Set("g", Run.Bind("https://www.google.com"))
-subChord.Set("b", Run.Bind("https://www.bing.com"))
-
-mainChord.Set("c", Run.Bind("calc.exe"))
-mainChord.Set("n", Run.Bind("notepad.exe"))
-mainChord.Set("w", subChord)
-
-^!m::mainChord.Execute()
-```
-
-In this example, within 3 seconds after pressing Ctrl+Alt+M:
-
-- Pressing 'c' will launch the Calculator
-- Pressing 'n' will launch Notepad
-- Pressing 'w' will activate the subChord, then (within 2 seconds):
-  - Pressing 'g' will open Google
-  - Pressing 'b' will open Bing
-
-Having multiple nested KeyChords will let you use the same button to trigger multiple different actions. For example, "Ctrl+I, then A, then P" might open MS Paint, but "Ctrl+I, then B, then P" might open Notepad.
-
-___
-
-### 3. Using default constructor
-
-```ahk
-#Include "KeyChord.ahk"
-
-myKeyChord := KeyChord(3,
-    "c", Run.Bind("calc.exe"),
-    "n", Run.Bind("notepad.exe"),
-    "w", KeyChord(2,
-        "g", Run.Bind("https://www.google.com"),
-        "b", Run.Bind("https://www.bing.com")
-    )
-)
-
-^!k::myKeyChord.Execute()
-```
-
-This example creates the same structure as the [previous nested KeyChords example](#2-nested-keychords) but uses the constructor for a more concise setup.
-
-___
-
-### 4. Using conditions with KeyChord.Action
-
-```ahk
-#Include "KeyChord.ahk"
-
-myKeyChord := KeyChord(2)
-
-myKeyChord.Set("a", KeyChord.Action(Run.Bind("notepad.exe"), () => A_Hour < 12))
-myKeyChord.Set("b", KeyChord.Action(Run.Bind("calc.exe"), () => A_Hour >= 12))
-
-^!k::myKeyChord.Execute()
-```
-
-In this example, within 2 seconds after pressing Ctrl-Alt-k:
-
-- Pressing 'a' will only launch Notepad if the current hour is before noon
-- Pressing 'b' will only launch Calculator if the current hour is noon or later
-
-___
-
-### 5. Using wildcards
-
-```ahk
-#Include "KeyChord.ahk"
-
-myKeyChord := KeyChord(2)
-
-myKeyChord.Set("a-z", MsgBox.Bind("You pressed a letter!"))
-myKeyChord.Set("0-9", () => MsgBox("You pressed a number!"))
-myKeyChord.Set("F*" , MsgBox.Bind("You pressed F1-F24!"))
-
-^!k::myKeyChord.Execute()
-```
-
-In this example, after pressing Ctrl+Alt+K:
-
-- Pressing any letter from `a` to `z` will display a message box. This uses MsgBox.Bind() to bind the function call to the action.
-- Pressing any number from `0` to `9` will display a message box. This uses a Fat arrow function to pass as the command.
-- Pressing any function key (F1 through F24) will display a message box. This uses the asterisk wildcard to match against key names.
-
-___
-
-### 6. Combining features with conditions and wildcard patterns
-
-```ahk
-#Include "KeyChord.ahk"
-
-mainChord := KeyChord()     ;
-nestedChord := KeyChord()   ; KeyChords have a 3 second timeout value by default.
-wildcardChord := KeyChord() ;
-
-mainChord.Set("c", Run.Bind("calc"))
-mainChord.Set("n", Run.Bind("notepad"))
-mainChord.Set("1", nestedChord)
-mainChord.Set("F*", wildcardChord)
-
-nestedChord.Set("p", Run.Bind("mspaint"))
-nestedChord.Set("w", KeyChord.Action(Run.Bind("wordpad"), () => A_Hour >= 9 && A_Hour < 17))
-
-wildcardChord.Set("<+>+?", Run.Bind("explorer.exe"))
-wildcardChord.Set("b-f", KeyChord.Action(Run.Bind("https://www.google.com"), "A_ComputerName = 'MyComputer'"))
-
-^#a::mainChord.Execute()
-```
-
-This example combines nested key chords, wildcard key-command mappings, regular key-command mappings, and conditions.
-
-- The `mainChord` instance has mappings for "c" and "n" keys, a nested `nestedChord` instance mapped to the "1" key, and a `wildcardChord` instance mapped to the "F*" key (wildcard representing any key F1-F24).
-- The `nestedChord` has a mapping for the "p" key to open Paint, and a mapping for the "w" key to open Wordpad, but only if the current hour is between 9 AM and 5 PM (inclusive).
--The `wildcardChord` has a wildcard mapping for `<+>+?` (LShift, RShift, and any other single character key) to open the File Explorer, and a range mapping for `b-f` (`b`, `c`, `d`, `e`, or `f`) to open Google, but only if the computer name is "MyComputer".
-
-___
-
-### 7. Using Custom Functions with the KeyChord Class
-
-The most common way to use a custom function as a command with the KeyChord class is to create an Action object with the function bound to the `Command` or `Condition` property using the Bind method. Functions Bound to the `Condition` property must evaluate to a true / false value. Here's an example:
-
-```ahk
-#Include "KeyChord.ahk"
-
-; Define a custom function
-AddAndDisplay(param1, param2)
-{
-    result := param1 + param2
-    MsgBox("Result of addition:`n" param1 "+" param2 "=" result)
-}
-
-IsNumberEven(param1, param2)
-{
-    if (param1 % 2) == 0
-        return true
-}
-
-number1 := 2
-number2 := 6
-
-; Create a KeyChord instance
-customChord := KeyChord()
-
-; Add a key-command mapping using the custom function
-customChord.Set("c", KeyChord.Action(AddAndDisplay.Bind(number1, number2), IsNumberEven.Bind(number1, number2)))
-
-; Bind the KeyChord instance to a hotkey
-^#c::customChord.Execute()
-```
-
-In this example, when you press Ctrl+Win+c, then c again (within 3 seconds) `IsNumberEven(2, 6)` will be called, and if it returns true (in this example it will), `AddAndDisplay(2, 6)` will be called.
+      ```ahk
+      KCManager.BlockingOverlay.Destroy()
+      ```
