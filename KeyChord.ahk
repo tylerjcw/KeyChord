@@ -998,10 +998,8 @@ class KCManager
     **/
     static ParseKey(key)
     {
-        for symbol, replacement in  Map("<", "L", ">", "R", "+", "Shift+", "^", "Ctrl+", "!", "Alt+", "#", "Win+")
-            key := StrReplace(key, symbol, replacement)
-
-        return key
+        replacements := Map("<", "L", ">", "R", "+", "Shift+", "^", "Ctrl+", "!", "Alt+", "#", "Win+")
+        return RegExReplace(key, "([<>+^!#])", (m) => replacements[m.1])
     }
 
     /**
