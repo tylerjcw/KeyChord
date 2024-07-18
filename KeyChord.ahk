@@ -976,7 +976,7 @@ class KCManager
 
                 spacePrefix := StrRepeat(" ", StrLen(linePrefix))
                 cmd_type := (Type(action.Command) == "KeyChord") ? "KeyChord" : "Action"
-                key_list.AddActions(, linePrefix . key_name, spacePrefix action.Description, spacePrefix condition, spacePrefix cmd_type)
+                key_list.Add(, linePrefix . key_name, spacePrefix action.Description, spacePrefix condition, spacePrefix cmd_type)
             
                 if (cmd_type == "KeyChord")
                 {
