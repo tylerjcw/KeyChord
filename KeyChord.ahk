@@ -31,7 +31,7 @@
  *  A KCAction encapsulates a key, a command, an optional condition that must be met in order to
  *  execute the command, and an optional short description of what the KCAction does.
  *  
- *  @constructor `Action(key, command, condition?, description?)`
+ *  @constructor `KCAction(key, command, condition?, description?)`
  *  @property {String} Key The key that must be pressed in order to execute the command.
  *  @property {KeyChord|Action|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} Command The command to be executed when the Action is executed.
  *  @property {Boolean|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} [Condition=True] The condition that must be met in order to execute the command. Defaults to `True`.
@@ -51,16 +51,15 @@ class KCAction
     {
         get
         {
-            key := ""
-            key := StrReplace(this.Key, "<", "L")
-            key := StrReplace(this.Key, ">", "R")
-            key := StrReplace(this.Key, "+", "Shift+")
-            key := StrReplace(this.Key, "^", "Ctrl+")
-            key := StrReplace(this.Key, "!", "Alt+")
-            key := StrReplace(this.Key, "#", "Win+")
-            return key
+            replacements := Map("<", "L", ">", "R", "+", "Shift+", "^", "Ctrl+", "!", "Alt+", "#", "Win+")
+            return RegExReplace(this.Key, "([<>+^!#])", (m) => replacements[m.1])
         }
     }
+
+    Key := ""
+    Command := () => ""
+    Condition := True
+    Description := ""
 
     /**
      * Creates a new KCAction instance.
@@ -228,7 +227,7 @@ class KCAction
  *  @constructor `KeyChord(timeout?)`
  *  @property {Boolean} [RemindKeys=True] Whether to remind the user of the keys in the KeyChord.
  *  @property {Integer} Length The number of actions in the KeyChord.
- *  @method `Execute()`: `Void` Execute the keychord.
+ *  @method `Execute()`: `Void` Execute the chord.
 **/
 class KeyChord
 {
@@ -268,6 +267,8 @@ class KeyChord
                 name := this.FirstIndexOf(name)
             else if not (name is Integer)
                 throw ValueError("Invalid key type. Must be String or Integer", -1, "name: " Type(name))
+            else if (name < 1) or (name > this.Length)
+                throw ValueError("Index out of range", -1, "name: " name)
 
             return KCAction(this._keyList[name], this._commandList[name], this._conditionList[name], this._descriptionList[name])
         }
@@ -490,8 +491,8 @@ class KeyChord
     **/
     Merge(keychords*)
     {
-        for keychord in keychords
-            for action in keychord
+        for chord in keychords
+            for action in chord
                 this.AddActions(action)
         return this
     }
@@ -639,14 +640,28 @@ class KeyChord
      * @param {String} key - The key to match.
      * @returns {KCAction|undefined} The first matching action, or undefined if none found.
     **/
-    FirstTrue(key) => this.Transform((action) => action.Key == key and action.IsTrue(), True)[1]
+    FirstTrue(key)
+    {
+        result := this.FindTrue(key)
+        if result.Length > 0
+            return result[1]
+        else
+            KCManager.TimedToolTip("Error: Key not found.`nKey: " key, 3)
+    }
 
     /**
      * Finds the last action with a matching key and true condition.
      * @param {String} key - The key to match.
      * @returns {KCAction|undefined} The last matching action, or undefined if none found.
     **/
-    LastTrue(key) => this.Transform((action) => action.Key == key and action.IsTrue(), True)[-1]
+    LastTrue(key)
+    {
+        result := this.FindTrue(key)
+        if result.Length > 0
+            return result[-1]
+        else
+            KCManager.TimedToolTip("Error: Key not found.`nKey: " key, 3)
+    }
     
     /**
      * Returns all commands of a specific type.
@@ -754,36 +769,40 @@ class KCManager
      * @param {String} text The text to display.
      * @param {Number} duration The duration to display the tooltip.
     **/
-    static TimedToolTip(text, duration?) => ( ToolTip(text), SetTimer(() => ToolTip(), -(IsSet(duration) ? 1000 * duration : 3000)) )
+    static TimedToolTip(text, duration := 3) => ( ToolTip(text), SetTimer(() => ToolTip(), -(duration * 1000)) )
 
     /**
      * Executes a KeyChord.
-     * @param {KeyChord} keychord The KeyChord to execute.
+     * @param {KeyChord} chord The KeyChord to execute.
      * @param {Number} [mode=1] The execution mode.
      * @param {Number} [timeout=3] The timeout for execution.
      * @param {String} [parent_key=A_ThisHotkey] The parent key string.
      * @returns {Boolean} True if execution was successful, False otherwise.
     **/
-    static Execute(keychord, mode := 1, timeout := 3, parent_key := A_ThisHotkey)
+    static Execute(chord, mode := 1, timeout := 3, parent_key := A_ThisHotkey)
     {
         Loop
         {
             keyString := ""
-            for action in keychord
+            if chord is KeyChord
             {
-                if (A_Index > 1)
-                    keyString .= ", "
-                keyString .= action.ReadableKey
+                for action in chord
+                {
+                 if (A_Index > 1)
+                     keyString .= ", "
+                 keyString .= action.ReadableKey
+                }
             }
 
             this.TimedToolTip("Press a key...`n" keyString, timeout)
             input := this.GetUserInput(timeout)
-            this.TimedToolTip(input, 1)
+            ;MsgBox("This One?")
+            this.TimedToolTip(input)
 
             if !input
             {
-                if keychord.RemindKeys
-                    this.Help(keychord, parent_key)
+                if chord.RemindKeys
+                    this.Help(chord, parent_key)
 
                 this.TimedToolTip("Error: No input received.")
                 return False
@@ -793,20 +812,37 @@ class KCManager
                 switch mode
                 {
                     case 1, "first", "f":
-                        keychord := keychord.FirstTrue(input)
+                        chord := chord.FirstTrue(input)
                     case 2, "last", "l":
-                        keychord := keychord.LastTrue(input)
+                        chord := chord.LastTrue(input)
                     case 3, "all", "a":
-                        keychord := keychord.FindTrue(input)
+                        chord := chord.FindTrue(input)
                 }
 
-                if keychord is KCAction
-                    return keychord.Execute(timeout, parent_key)
-                else if keychord.Length > 0
-                    for action in keychord
-                        action ? action.Execute(timeout, parent_key ", " input) : this.TimedToolTip("Error: Key not found.")
+                if chord is KCAction
+                {
+                    chord.Execute(timeout, parent_key)
+                    return True
+                }
+                else if (chord is String) or (chord is Number) or (chord is Integer) or (chord is Float)
+                {
+                    IsSet(action) ? action.Execute(timeout, parent_key ", " input) : this.TimedToolTip("Error: Key not found.")
+                    return True
+                }
+                else if (chord is Array)
+                {
+                    if (chord.Length > 0)
+                    {
+                        for action in chord
+                        {
+                            IsSet(action) ? action.Execute(timeout, parent_key ", " input) : this.TimedToolTip("Error: Key not found.")
+                        }
 
-                return (keychord.Length > 0)
+                        return true
+                    }
+                }
+
+                return False
             }
         }
     }
@@ -922,10 +958,10 @@ class KCManager
 
     /**
      * Displays help for a KeyChord.
-     * @param {KeyChord} keychord The KeyChord to display help for.
+     * @param {KeyChord} chord The KeyChord to display help for.
      * @param {String} parent_key The parent key string.
     **/
-    static Help(keychord, parent_key := A_ThisHotkey)
+    static Help(chord, parent_key := A_ThisHotkey)
     {
         msg_box := Gui()
         msg_box.Opt("+ToolWindow +AlwaysOnTop -Resize") ; Set the GUI options
@@ -935,7 +971,7 @@ class KCManager
         key_list := msg_box.AddListView("w800 r20", ["Key", "Description", "Condition", "Type"])
         key_list.Opt("+Grid +NoSortHdr +NoSort")
 
-        ParseKeyChord(keychord, 1) ; Recursively parse the KeyChord and dynamically add the Text elements to the GUI
+        ParseKeyChord(chord, 1) ; Recursively parse the KeyChord and dynamically add the Text elements to the GUI
 
         key_list.ModifyCol(2, "AutoHdr")
         msg_box.Show("AutoSize Hide") ; "Show" the GUI but keep it hidden, so we can get it's width
@@ -943,7 +979,7 @@ class KCManager
         ok_btn.OnEvent("Click", (*) => msg_box.Destroy()) ; Destroy the GUI when the button is clicked
         msg_box.Show("AutoSize") ; Resize the GUI and unhide it.
 
-        ParseKeyChord(keychord, level, parentPrefix := "")
+        ParseKeyChord(chord, level, parentPrefix := "")
         {
             StrRepeat(s, c)
             {
@@ -953,10 +989,10 @@ class KCManager
                 return result
             }
 
-            for action in keychord
+            for action in chord
             {
                 key_name := action.ReadableKey
-                isLastItem := (A_Index == keychord.Length)
+                isLastItem := (A_Index == chord.Length)
                     
                 linePrefix := parentPrefix
                 if (level > 1)
