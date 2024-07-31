@@ -266,6 +266,9 @@ class KCAction
     }
 }
 
+;  Credit to nperovic on GitHub for the "MouseHook.ahk" script
+;  that inspired and heavily influenced the KCInputHook class.
+;  https://github.com/nperovic/MouseHook
 /**
  *  An input hook that captures keyboard and mouse input.
  * 
@@ -557,6 +560,7 @@ class KeyChord
 
     /**
      *  Gets an Enumerator for the KeyChord.
+     *  Credit goes to Descolada, who made a forum post that really cleared up the way "__Enum" works for me.
      *  @param {Integer} num The number of elements to return.
      *  @returns {Func} A closure that returns the requested number of elements.
     **/
