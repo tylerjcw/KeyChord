@@ -1,9 +1,8 @@
+#Requires AutoHotKey v2.0
+
 /**
  *  KeyChord.ahk
- *  
- *  A class for writing key chords in AutoHotKey.
- *  Now combinations like "Ctrl+Win+d, x, u" are supported!
- *  
+ * 
  *  @version 1.5
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://autohotkey.com/boards/viewtopic.php?f=83&t=131037
@@ -23,7 +22,6 @@
  *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  
 **/
-#Requires AutoHotKey v2.0
 
 /**
  *  Represents an action that can be executed as part of a KeyChord.
@@ -157,16 +155,15 @@ class KCAction
             switch Type(this.Command)
             {
                 Case "KeyChord":
-                    KCManager.Execute(this.Command, timeout, parent_key)
-                    return
+                    return KCManager.Execute(this.Command, , timeout, parent_key)
                 Case "String", "Integer", "Boolean", "Number", "Float":
                     Send(this.Command)
-                    return
+                    return parent_key
                 Case "Func", "BoundFunc", "Closure", "Enumerator":
                     this.Command.Call()
-                    return
+                    return parent_key
                 Default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
-                    throw ValueError("Command must be a KeyChord, String, Integer, Boolean, Number, Float, KeyChord, Func, BoundFunc, Closure, or Enumerator", -1, "Command: " Type(this.Command))
+                    throw ValueError("Command must be a KeyChord, String, Integer, Boolean, Number, Float, Func, BoundFunc, Closure, or Enumerator", -1, "Command: " Type(this.Command))
             }
         }
     }
@@ -269,9 +266,228 @@ class KCAction
     }
 }
 
+/**
+ *  An input hook that captures keyboard and mouse input.
+ * 
+ *  ```ahk2
+ *  kcHook := KCInputHook()         ; Create an instance of KCInputHook
+ *  loop
+ *  {
+ *      kcHook.Start()              ; Start the KCInputHook
+ *      Result := kcHook.Wait(5000) ; Wait 5 seconds for user input
+ *      kcHook.Stop()               ; Stop the KCInputHook
+
+ *      MsgBox(result)              ; Display the result
+ *  } until (Result == "Escape")    ; Exit the loop if the user presses the Escape key
+ *  ```
+ * 
+ *  @constructor `KCInputHook()`
+ *  @property {String} Result The result of the input hook (includes modifiers).
+ *  @property {String} Modifiers The modifiers that were pressed.
+ *  @property {Boolean} IsCapturing Whether the input hook is currently capturing input.
+**/
+class KCInputHook
+{
+    _mouseLLHook := 0
+    _mouseLLProc := 0
+    _keyboardLLHook := 0
+    _keyboardLLProc := 0
+    Result := ""
+    Modifiers := ""
+    IsCapturing := False
+
+    /**
+     * Starts the KCInputHook capturing
+     */
+    Start()
+    {
+        Sleep(300) ; Sleep to give any keys that were pressed time to reset.
+        this._mouseLLProc := CallbackCreate(this._mouseLLFunc.Bind(this), "F", 3)
+        this._keyboardLLProc := CallbackCreate(this._keyboardLLFunc.Bind(this), "F", 3)
+        this._mouseLLHook := DllCall("SetWindowsHookEx", "Int", 14, "Ptr", this._mouseLLProc, "Ptr", 0, "UInt", 0, "Ptr")
+        this._keyboardLLHook := DllCall("SetWindowsHookEx", "Int", 13, "Ptr", this._keyboardLLProc, "Ptr", 0, "UInt", 0, "Ptr")
+        this.IsCapturing := True
+    }
+
+    /**
+     * Stops and resets the KCInputHook
+     */
+    Stop()
+    {
+        this.IsCapturing := False
+        if (this._mouseLLHook)
+            DllCall("UnhookWindowsHookEx", "Ptr", this._mouseLLHook)
+
+        if (this._keyboardLLHook)
+            DllCall("UnhookWindowsHookEx", "Ptr", this._keyboardLLHook)
+
+        if (this._mouseLLProc)
+            CallbackFree(this._mouseLLProc)
+
+        if (this._keyboardLLProc)
+            CallbackFree(this._keyboardLLProc)
+        
+        this.Clear()
+    }
+
+    /**
+     * Makes sure all variables are reset
+     */
+    Clear()
+    {
+        this._mouseLLHook := 0
+        this._mouseLLProc := 0
+        this._keyboardLLHook := 0
+        this._keyboardLLProc := 0
+        this.Result := ""
+        this.Modifiers := ""
+        this.IsCapturing := False
+    }
+
+    /**
+     * Low-Level Mouse Function
+     * @param nCode 
+     * @param wParam 
+     * @param lParam 
+     * @returns {Integer | Float | String} 
+     */
+    _mouseLLFunc(nCode, wParam, lParam)
+    {
+        if (nCode >= 0 && this.IsCapturing)
+        {
+            mouseData := NumGet(lParam + 8, "Int")
+            switch wParam
+            {
+                case 0x0201: this.Result := "LButton"
+                case 0x0204: this.Result := "RButton"
+                case 0x0207: this.Result := "MButton"
+                case 0x020B:
+                    xButton := (mouseData >> 16) & 0xFFFF
+                    this.Result := xButton == 1 ? "XButton1" : "XButton2"
+                case 0x020A: this.Result := mouseData > 0 ? "WheelUp" : "WheelDown"
+                case 0x020E: this.Result := mouseData > 0 ? "WheelRight" : "WheelLeft"
+            }
+            if (this.Result != "")
+            {
+                return 1  ; Block the event
+            }
+        }
+        return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "Ptr", wParam, "Ptr", lParam, "Ptr")
+    }
+
+    /**
+     * Low-Level Keyboard function
+     * @param nCode  
+     * @param wParam 
+     * @param lParam 
+     * @returns {Integer | Float | String} 
+     */
+    _keyboardLLFunc(nCode, wParam, lParam)
+    {
+        if (nCode >= 0 && this.IsCapturing)
+        {
+            vk := NumGet(lParam + 0, "UChar")
+            sc := NumGet(lParam + 4, "UShort")
+            key := GetKeyName(Format("vk{:x}sc{:x}", vk, sc))
+            
+            if (this.IsModifierKey(key))
+            {
+                if (wParam == 0x100 || wParam == 0x104)  ; WM_KEYDOWN or WM_SYSKEYDOWN
+                {
+                    this.UpdateModifiers(key, True)
+                }
+                else if (wParam == 0x101 || wParam == 0x105)  ; WM_KEYUP or WM_SYSKEYUP
+                {
+                    this.UpdateModifiers(key, False)
+                }
+            }
+            else
+            {
+                if (wParam == 0x100 || wParam == 0x104)  ; WM_KEYDOWN or WM_SYSKEYDOWN
+                {
+                    this.Result := key
+                }
+                else if (wParam == 0x101 || wParam == 0x105)  ; WM_KEYUP or WM_SYSKEYUP
+                {
+                    this.Result := ""
+                }
+            }
+
+            return 1  ; Block the event
+        }
+        return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "Ptr", wParam, "Ptr", lParam, "Ptr")
+    }
+
+    /**
+     *  Checks whether a given key is a modifier key
+     *  @param key The key to check
+     *  @returns {Integer} 
+     */
+    IsModifierKey(key)
+    {
+        static modifierKeys := ["LControl", "RControl", "LAlt", "RAlt", "LShift", "RShift", "LWin", "RWin"]
+        for _key in modifierKeys
+            if (key == _key)
+                return True
+
+        return False
+    }
 
 
+    /**
+     *  Updates the active modifiers
+     *  @param key The modifier to update
+     *  @param isKeyDown Whether the key is being pressed or released
+     */
+    UpdateModifiers(key, isKeyDown)
+    {
+        modMap := Map(
+            "LControl", "<^", "RControl", ">^",
+            "LAlt", "<!",     "RAlt", ">!",
+            "LShift", "<+",   "RShift", ">+",
+            "LWin", "<#",     "RWin", ">#"
+        )
 
+        if (isKeyDown)
+        {
+            if (!InStr(this.Modifiers, modMap[key]))
+                this.Modifiers .= modMap[key]
+        }
+        else
+        {
+            this.Modifiers := StrReplace(this.Modifiers, modMap[key], "")
+        }
+    }
+
+    /**
+     * Wait for input and return captured keys / mouse buttons
+     * @param {Number} timeout How long the KCInputHook should wait for input in milliseconds. Default is -1 for indefinite.
+     * @returns {String} 
+     */
+    Wait(timeout := -1) 
+    {
+        startTime := A_TickCount
+
+        loop
+        {
+            if (timeout > 0 && A_TickCount - startTime > timeout)
+            {
+                this.IsCapturing := False
+                return "Timeout"
+            }
+
+            if (this.Result != "")
+            {
+                finalResult := this.Modifiers . this.Result
+                this.Result := ""
+                this.IsCapturing := False
+                return finalResult
+            }
+
+            Sleep(10)
+        }
+    }
+}
 
 /**
  *  KeyChord class
@@ -839,10 +1055,6 @@ class KeyChord
     }
 }
 
-
-
-
-
 /**
  * KCManager
  * Manages the execution and interaction of KeyChords.
@@ -888,16 +1100,15 @@ class KCManager
 
             this.TimedToolTip("Press a key...`n" keyString, timeout)
             input := this.GetUserInput(timeout)
-            ;MsgBox(input)
             this.TimedToolTip(input)
 
-            if !input
+            if not input or (input == "Timeout")
             {
                 if chord.RemindKeys
                     this.Help(chord, parent_key)
 
                 this.TimedToolTip("Error: No input received.")
-                return False
+                return "None Received"
             }
             else
             {
@@ -913,13 +1124,21 @@ class KCManager
 
                 if chord is KCAction
                 {
-                    chord.Execute(timeout, parent_key)
-                    return True
+                    result := chord.Execute(timeout, parent_key ", " input)
+                    return result
                 }
-                else if (chord is String) or (chord is Number) or (chord is Integer) or (chord is Float)
+                else if KCAction.EqualsObject(chord) and ((chord.Action is String) or (chord.Action is Number) or (chord.Action is Integer) or (chord.Action is Float))
                 {
-                    IsSet(action) ? action.Execute(timeout, parent_key ", " input) : this.TimedToolTip("Error: Key not found.")
-                    return True
+                    if IsSet(action)
+                    {
+                        result := action.Execute(timeout, parent_key ", " input)
+                    }
+                    else
+                    {
+                        this.TimedToolTip("Error: Key not found.`nInput: " input)
+                    }
+
+                    return parent_key ", " input
                 }
                 else if (chord is Array)
                 {
@@ -927,14 +1146,19 @@ class KCManager
                     {
                         for action in chord
                         {
-                            IsSet(action) ? action.Execute(timeout, parent_key ", " input) : this.TimedToolTip("Error: Key not found.")
+                            if IsSet(action)
+                                action.Execute(timeout, parent_key ", " input)
+                            else
+                            {
+                                this.TimedToolTip("Error: Key not found.")
+                            }
                         }
 
-                        return true
+                        return parent_key ", " input
                     }
                 }
 
-                return False
+                return "Key Not Found"
             }
         }
     }
@@ -946,104 +1170,25 @@ class KCManager
     **/
     static GetUserInput(timeout := 0)
     {
-        overlay := KCManager.BlockingOverlay.Create()
-
         if (timeout <= 0)
             throw ValueError("Timeout must be greater than 0", -1, Type(timeout) ": " timeout)
 
-        Suspend(True) ; Suspend the user's hotkeys, to avoid interference
+        kcHook := KCInputHook()
 
-        static specialKeys := ([ ; Make sure all special keys are handled
-            "CapsLock"         , "Space"           , "Backspace"    , "Delete"         , "Up"                , "Down"         ,
-            "Left"             , "Right"           , "Home"         , "End"            , "PgUp"              , "PgDn"         ,
-            "Insert"           , "Tab"             , "Enter"        , "Esc"            , "ScrollLock"        , "AppsKey"      ,
-            "PrintScreen"      , "CtrlBreak"       , "Pause"        , "Help"           , "Sleep"             , "Browser_Back" ,
-            "Browser_Forward"  , "Browser_Refresh" , "Browser_Stop" , "Browser_Search" , "Browser_Favorites" , "Browser_Home" ,
-            "Volume_Mute"      , "Volume_Up"       , "Volume_Down"  , "Media_Next"     , "Media_Prev"        , "Media_Stop"   ,
-            "Media_Play_Pause" , "Launch_Mail"     , "Launch_Media" , "Launch_App1"    , "Launch_App2"       , "NumpadDot"    ,
-            "NumpadDiv"        , "NumpadMult"      , "NumpadAdd"    , "NumpadSub"      , "NumpadEnter"       , "NumLock"      ,
-            "NumpadIns"        , "NumpadEnd"       , "NumpadDown"   , "NumpadPgDn"     , "NumpadLeft"        , "NumpadClear"  ,
-            "NumpadRight"      , "NumpadHome"      , "NumpadUp"     , "NumpadPgUp"     , "NumpadDel"         , "Numpad0"      ,
-            "Numpad1"          , "Numpad2"         , "Numpad3"      , "Numpad4"        , "Numpad5"           , "Numpad6"      ,
-            "Numpad7"          , "Numpad8"         , "Numpad9"      , "F1"             , "F2"                , "F3"           ,
-            "F4"               , "F5"              , "F6"           , "F7"             , "F8"                , "F9"           ,
-            "F10"              , "F11"             , "F12"          , "F13"            , "F14"               , "F15"          ,
-            "F16"              , "F17"             , "F18"          , "F19"            , "F20"               , "F21"          ,
-            "F22"              , "F23"             , "F24"          ,
-        ])
-
-        endKeys := ""
-        for tempKey in specialKeys
+        try
         {
-            tempKey := "{" tempKey "}"
-            endKeys .= tempKey
-        } ; Adds curly braces to the keys in the array above, so they match the correct syntax expected by EndKeys
-
-
-        key := InputHook("L1 T" timeout, endKeys) ; Create a one character input hook, with the timeout and endKeys passed by the user
-        key.KeyOpt("{All}", "S")  ; Suppress all keys
-        key.KeyOpt("{LCtrl}{RCtrl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}", "N") ; Allow detection of modifiers by causing OnKeyUp and OnKeyDown to be called
-        key.Start()
-
-        endTime := A_TickCount + timeout * 1000
-
-        Loop
-        {
-            if (key.EndReason != "")
-                break
-
-            if (A_TickCount > endTime)
-            {
-                key.Stop()
-                MsgBox("Input timed out or failed.`nTimeout: " timeout, "Error")
-                Return ""
-            }
-
-            ; We only need to worry about these 8 modifiers, since the "sided" vs "non-sided"
-            ; key strings are detected and handled in the KeyChord.Execute() function.
-            modifiers := ""
-            modKeys := [
-                ["LCtrl" , "<^"], ["RCtrl" , ">^"],
-                ["LAlt"  , "<!"], ["RAlt"  , ">!"],
-                ["LShift", "<+"], ["RShift", ">+"],
-                ["LWin"  , "<#"], ["RWin"  , ">#"]]
-
-            ; Check to see if any of the modifiers are pressed,
-            ; if they are, add them to the modifiers string.
-            for key in modKeys
-            {
-                if GetKeyState(key[1], "P")
-                   modifiers .= key[2]
-            }
-
-            mouseButtons := ["LButton"  , "RButton"  , "MButton"  ,
-                             "XButton1" , "XButton2" , "WheelUp"  ,
-                             "WheelDown", "WheelLeft", "WheelRight"]
-
-            ; Check to see if any of the mouse buttons are pressed,
-            ; if they are, return the modifiers + mouse buttons.
-            for mouseButton in mouseButtons
-            {
-                if (GetKeyState(mouseButton, "P"))
-                {
-                    key.Stop()
-                    KeyWait(mouseButton)
-                    Sleep(50)
-                    Suspend(False)
-                    KCManager.BlockingOverlay.Destroy()
-                    return modifiers . mouseButton
-                }
-            }
-
-            Sleep 10
+            kcHook.Start()
+            input := kcHook.Wait(timeout * 1000)
         }
+        catch as err
+        {
 
-        KCManager.BlockingOverlay.Destroy()
-        Suspend(False) ; Resume the user's hotkeys
-
-        ; If not a special key, return the input, plus modifiers
-        input := modifiers . (key.Input ? key.Input : key.EndKey)
-        unsidedKey := RegExReplace(input, "(<|>)*", "")
+        }
+        finally
+        {
+            kcHook.Stop()
+            kcHook := ""
+        }
 
         return input
     }
@@ -1095,7 +1240,6 @@ class KCManager
             {
                 key_name := action.ReadableKey
                 isLastItem := (A_Index == chord.Length)
-                    
                 linePrefix := parentPrefix
                 if (level > 1)
                 {
@@ -1115,7 +1259,7 @@ class KCManager
                 spacePrefix := StrRepeat(" ", StrLen(linePrefix))
                 cmd_type := (Type(action.Command) == "KeyChord") ? "KeyChord" : "Action"
                 key_list.Add(, linePrefix . key_name, spacePrefix action.Description, spacePrefix condition, spacePrefix cmd_type)
-            
+                
                 if (cmd_type == "KeyChord")
                 {
                     newParentPrefix := parentPrefix
