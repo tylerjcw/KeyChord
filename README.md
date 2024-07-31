@@ -21,9 +21,9 @@
 
 KeyChord is a class for AutoHotkey v2 that allows you to create complex key chords (key sequences, key chains, whatever you want to call them). It enables you to bind multiple actions to a series of keystrokes, creating a flexible and customizable hotkey system. KeyChord extends the `Map` class, and as such all of it's methods and properties are available, and they can be enumerated.
 
-Thank you to [Descolada](https://github.com/Descolada). The __Enum method was really cleared up for me after reading a forum post they made.
+Thank you to [Descolada](https://github.com/Descolada), The __Enum method was really cleared up for me after reading a [forum post](https://www.autohotkey.com/boards/viewtopic.php?p=544924#p544924) they made.
 
-Thank you to [Nikola](https://github.com/nperovic/MouseHook) for the MouseHook script that helped me understand DllCalls and aided in the creation of the KCInputHook class.
+Thank you to [Nikola](https://github.com/nperovic) for the [MouseHook](https://github.com/nperovic/MouseHook) script that helped me understand DllCalls and aided in the creation of the KCInputHook class.
 
 
 ## Features
