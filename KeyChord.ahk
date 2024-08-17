@@ -48,7 +48,7 @@ class KCAction
      * action := KCAction("^#a", "Test command", True, "Test description")
      * MsgBox(action.ReadableKey) ; This will display "Ctrl+Win+a"
      * ```
-     * 
+     *
      * @returns {String} The key in a readable format.
     **/
     ReadableKey
@@ -56,7 +56,7 @@ class KCAction
         get
         {
             replacements := Map("<", "L", ">", "R", "+", "Shift+", "^", "Ctrl+", "!", "Alt+", "#", "Win+")
-            return RegExReplace(this.Key, "([<>+^!#])", (m) => replacements[m.1])
+            return RegExReplace(this.Key, "([<>+^!#])", "ReplaceModifier") ; Uses PCRE callout function to replace modifiers
         }
     }
 
@@ -105,6 +105,21 @@ class KCAction
         else if !(Type(description) == "String")
             throw ValueError("Description must be or evaluate to a String", -1, "Description: " Type(description))
         return
+    }
+
+    /**
+     * Callout function for use with the Perl Compatible Regular Expression in the
+     * `ReadableKey` property. Added for compatibility with AHK versions >= 2.0. {@link https://www.pcre.org/pcre.txt (PCRE Documentation)}
+     * ___
+     * Replaces modifier symbols with their corresponding key names.
+     * @param {string} match - The matched modifier symbol.
+     * @param {string} _ - Unused parameter.
+     * @param {string} __ - Unused parameter.
+     * @returns {string} The key name corresponding to the modifier symbol.
+    **/
+    ReplaceModifier(m, _, __) {
+        static replacements := Map("<", "Left", ">", "Right", "+", "Shift", "^", "Ctrl", "!", "Alt", "#", "Win")
+        return replacements[m]
     }
 
     /**
