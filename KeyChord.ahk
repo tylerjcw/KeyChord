@@ -25,10 +25,10 @@
 
 /**
  *  Represents an action that can be executed as part of a KeyChord.
- *  
+ *  ___
  *  A KCAction encapsulates a key, a command, an optional condition that must be met in order to
  *  execute the command, and an optional short description of what the KCAction does.
- *  
+ *  ___
  *  @constructor `KCAction(key, command, condition?, description?)`
  *  @property {String} Key The key that must be pressed in order to execute the command.
  *  @property {KeyChord|Action|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} Command The command to be executed when the Action is executed.
@@ -43,12 +43,12 @@ class KCAction
 {
     /**
      * Returns the key in a more readable format. Like `Ctrl+Win`, instead of `^#`
-     * 
+     *
      * ```
      * action := KCAction("^#a", "Test command", True, "Test description")
      * MsgBox(action.ReadableKey) ; This will display "Ctrl+Win+a"
      * ```
-     *
+     * ___
      * @returns {String} The key in a readable format.
     **/
     ReadableKey
@@ -71,7 +71,7 @@ class KCAction
      * ```
      * action := KCAction("a", "Test command", True, "Test description")
      * ```
-     * 
+     * ___
      * @param {String} key The key associated with this action.
      * @param {KeyChord|Action|String|Integer|Float|Number|Func|BoundFunc|Closure|Enumerator} command The command to be executed when `key` is pressed.
      * @param {Any} condition The condition to evaluate before executing. Must evaluate to true to execute the command.
@@ -108,12 +108,8 @@ class KCAction
     }
 
     /**
-     * Callout function for use with the Perl Compatible Regular Expression in the
-     * `ReadableKey` property. Added for compatibility with AHK versions >= 2.0.
-     * ___
-     * {@link https://www.autohotkey.com/docs/v2/misc/RegExCallout.htm (AHK RegEx Callout Documentation)}
-     * 
-     * {@link https://www.pcre.org/pcre.txt (PCRE Documentation)}
+     * Callout function for use in the `ReadableKey` property.
+     * Added for compatibility with AHK versions >= 2.0.
      * ___
      * Replaces modifier symbols with their corresponding key names.
      * @param {string} match - The matched modifier symbol.
@@ -135,7 +131,7 @@ class KCAction
      * if action.IsTrue()
      *   MsgBox("The condition is true") ; This will display
      * ```
-     * 
+     * ___
      * @param {Any} value The value to check (defaults to the action's condition).
      * @returns {Boolean} True if the condition is true, False otherwise.
     **/
@@ -163,7 +159,7 @@ class KCAction
      * action := KCAction("a", "Test command", True, "Test description") ; The condition is true
      * action.Execute() ; This will execute the command ("Test command" will be sent as text to the active window)
      * ```
-     * 
+     * ___
      * @param {Number} timeout The timeout for execution.
      * @param {String} parent_key The parent key string.
     **/
@@ -194,7 +190,7 @@ class KCAction
      * action := KCAction("a", "Test command", True, "Test description")
      * MsgBox(action.ToString())
      * ```
-     * 
+     * ___
      * @returns {String} A string describing the KCAction.
     **/
     ToString(indent := "")
@@ -249,7 +245,7 @@ class KCAction
      *   MsgBox("action1 is equal to action3") ; This won't execute
      * 
      * ```
-     * 
+     * ___
      * @param {KCAction} other - The other KCAction to compare with.
      * @returns {Boolean} True if the actions are equal, False otherwise.
     **/
@@ -271,7 +267,7 @@ class KCAction
      * if (KCAction.EqualsObject(testObj))
      *    MsgBox("testObj is equivalent to a KCAction")
      * ```
-     * 
+     * ___
      * @param {Object} obj - The object to check.
      * @returns {Boolean} True if the object is equivalent to a KCAction, False otherwise.
     **/
@@ -302,7 +298,7 @@ class KCAction
  *      MsgBox(result)              ; Display the result
  *  } until (Result == "Escape")    ; Exit the loop if the user presses the Escape key
  *  ```
- * 
+ * ___
  *  @constructor `KCInputHook()`
  *  @property {String} Result The result of the input hook (includes modifiers).
  *  @property {String} Modifiers The modifiers that were pressed.
