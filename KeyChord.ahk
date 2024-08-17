@@ -117,7 +117,8 @@ class KCAction
      * @param {string} __ - Unused parameter.
      * @returns {string} The key name corresponding to the modifier symbol.
     **/
-    ReplaceModifier(m, _, __) {
+    ReplaceModifier(m, _, __)
+    {
         static replacements := Map("<", "Left", ">", "Right", "+", "Shift", "^", "Ctrl", "!", "Alt", "#", "Win")
         return replacements[m]
     }
