@@ -66,7 +66,7 @@ class KCAction
 
     /**
      * Creates a new KCAction instance.
-     * 
+     *
      * ```
      * action := KCAction("a", "Test command", True, "Test description")
      * ```
@@ -124,10 +124,10 @@ class KCAction
 
     /**
      * Checks if the action's condition is true.
-     * 
+     *
      * ```
      * action := KCAction("a", "Test command", True, "Test description")
-     * 
+     *
      * if action.IsTrue()
      *   MsgBox("The condition is true") ; This will display
      * ```
@@ -154,7 +154,7 @@ class KCAction
 
     /**
      * Executes the action if its condition is true.
-     * 
+     *
      * ```
      * action := KCAction("a", "Test command", True, "Test description") ; The condition is true
      * action.Execute() ; This will execute the command ("Test command" will be sent as text to the active window)
@@ -185,7 +185,7 @@ class KCAction
 
     /**
      * Returns a string representation of the KCAction.
-     * 
+     *
      * ```
      * action := KCAction("a", "Test command", True, "Test description")
      * MsgBox(action.ToString())
@@ -214,7 +214,7 @@ class KCAction
             default: ; Array, Buffer, Error, File, Gui, InputHoot, Map, Menu, RegexMapInfo, VarRef, ComValue, any other custom class, or any other object
                 condition := Type(this.Condition)
         }
-        
+
 
         out_str := "`n" indent ";------------------------------;"
         out_str .= "`n" indent "Key := `"" this.ReadableKey "`""
@@ -232,18 +232,18 @@ class KCAction
 
     /**
      * Compares this `KCAction` with another for equality. All four properties must be _exactly_ the same on both `KCActions`.
-     * 
+     *
      * ```
      * action1 := KCAction("a", "Test command", True, "Test description")
      * action2 := KCAction("a", "Test command", True, "Test description")
      * action3 := KCAction("a", "Test command", True, "I'm different!")
-     * 
+     *
      * if (action1.Equals(action2))
      *   MsgBox("action1 is equal to action2") ; This will execute
-     * 
+     *
      * if (action1.Equals(action3))
      *   MsgBox("action1 is equal to action3") ; This won't execute
-     * 
+     *
      * ```
      * ___
      * @param {KCAction} other - The other KCAction to compare with.
@@ -260,10 +260,10 @@ class KCAction
     /**
      * Checks if an object is equivalent to a KCAction.
      * The object in question must have a Key and Command property to be considered "Equal" to a KCAction.
-     * 
+     *
      * ```
      * testObj = { Key: "a", Command: "Test command" }
-     * 
+     *
      * if (KCAction.EqualsObject(testObj))
      *    MsgBox("testObj is equivalent to a KCAction")
      * ```
@@ -276,7 +276,7 @@ class KCAction
         if (obj is Object)
             if obj.HasOwnProp("Key") and obj.HasOwnProp("Command")
                 return True
-        
+
         return False
     }
 }
@@ -286,7 +286,7 @@ class KCAction
 ;  https://github.com/nperovic/MouseHook
 /**
  *  An input hook that captures keyboard and mouse input.
- * 
+ *
  *  ```ahk2
  *  kcHook := KCInputHook()         ; Create an instance of KCInputHook
  *  loop
@@ -344,7 +344,7 @@ class KCInputHook
 
         if (this._keyboardLLProc)
             CallbackFree(this._keyboardLLProc)
-        
+
         this.Clear()
     }
 
@@ -364,10 +364,10 @@ class KCInputHook
 
     /**
      * Low-Level Mouse Function
-     * @param nCode 
-     * @param wParam 
-     * @param lParam 
-     * @returns {Integer | Float | String} 
+     * @param nCode
+     * @param wParam
+     * @param lParam
+     * @returns {Integer | Float | String}
      */
     _mouseLLFunc(nCode, wParam, lParam)
     {
@@ -395,10 +395,10 @@ class KCInputHook
 
     /**
      * Low-Level Keyboard function
-     * @param nCode  
-     * @param wParam 
-     * @param lParam 
-     * @returns {Integer | Float | String} 
+     * @param nCode
+     * @param wParam
+     * @param lParam
+     * @returns {Integer | Float | String}
      */
     _keyboardLLFunc(nCode, wParam, lParam)
     {
@@ -407,7 +407,7 @@ class KCInputHook
             vk := NumGet(lParam + 0, "UChar")
             sc := NumGet(lParam + 4, "UShort")
             key := GetKeyName(Format("vk{:x}sc{:x}", vk, sc))
-            
+
             if (this.IsModifierKey(key))
             {
                 if (wParam == 0x100 || wParam == 0x104)  ; WM_KEYDOWN or WM_SYSKEYDOWN
@@ -439,7 +439,7 @@ class KCInputHook
     /**
      *  Checks whether a given key is a modifier key
      *  @param key The key to check
-     *  @returns {Integer} 
+     *  @returns {Integer}
      */
     IsModifierKey(key)
     {
@@ -480,9 +480,9 @@ class KCInputHook
     /**
      * Wait for input and return captured keys / mouse buttons
      * @param {Number} timeout How long the KCInputHook should wait for input in milliseconds. Default is -1 for indefinite.
-     * @returns {String} 
+     * @returns {String}
      */
-    Wait(timeout := -1) 
+    Wait(timeout := -1)
     {
         startTime := A_TickCount
 
@@ -511,7 +511,7 @@ class KCInputHook
  *  KeyChord class
  *  This class provides a way to map keys to commands or nested key Chords.
  *  It allows for executing commands or nested key Chords based on user input.
- *  
+ *
  *  @constructor `KeyChord(timeout?)`
  *  @property {Boolean} [RemindKeys=True] Whether to remind the user of the keys in the KeyChord.
  *  @property {Integer} Length The number of actions in the KeyChord.
@@ -771,7 +771,7 @@ class KeyChord
         this._commandList.Clear()
         this._conditionList.Clear()
         this._descriptionList.Clear()
-    }    
+    }
 
     /**
      * Merges this KeyChord with another KeyChord.
@@ -802,17 +802,17 @@ class KeyChord
 
     /**
      * Validates all actions in the KeyChord.
-     * 
+     *
      * ```
      * testChord := KeyChord( ... ) ; Build Your KeyChord
      * if !testChord.ValidateAll()
      *    MsgBox("Invalid KeyChord")
      * ```
-     * 
+     *
      * @returns {Boolean} True if all actions are valid, False otherwise.
     **/
     ValidateAll()
-    {   
+    {
         for action in this
         {
             if !(action is KCAction)
@@ -841,12 +841,12 @@ class KeyChord
 
     /**
      * Finds indexes of actions that match a given comparison function.
-     * 
+     *
      * For example, the `FirstIndexOf()` method uses this function to find the first occurrence of a key:
      * ```
      * FirstIndexOf(key) => this.FindIndexes((action) => action.Key == key)[1]
      * ```
-     * 
+     *
      * @param {Function} comparisonFunc A function that takes an action and returns true if it matches the criteria.
      * @returns {Array} An array of indexes where matching actions are found.
     **/
@@ -856,24 +856,24 @@ class KeyChord
         for action in this
             if comparisonFunc(action)
                 indexes.Push(A_Index)
-    
+
         return indexes
     }
-    
+
     /**
      * Finds the index of the first occurrence of a key.
      * @param {String} key The key to search for.
      * @returns {Integer} The index of the first occurrence of the key, or 0 if not found.
     **/
     FirstIndexOf(key) => this.FindIndexes((action) => action.Key == key)[1]
-    
+
     /**
      * Finds the index of the last occurrence of a key.
      * @param {String} key The key to search for.
      * @returns {Integer} The index of the last occurrence of the key, or 0 if not found.
     **/
     LastIndexOf(key)  => this.FindIndexes((action) => action.Key == key)[-1]
-    
+
     /**
      * Finds all indexes of a key.
      * @param {String} key The key to search for.
@@ -886,12 +886,12 @@ class KeyChord
      * @param {Function} func - The function to apply to each action.
      * @param {Boolean} [filterMode=false] - If true, filters out actions for which func returns false.
      * @returns {KeyChord} A new KeyChord with transformed actions.
-     * 
+     *
      * Mapping Example:
      * ```ahk2
      * ; Appends "!!" to the end of the description of every action in the KeyChord
      * newKeyChord = keyChord.Transform((action) => ( action.Description .= "!!", return action ))
-     * 
+     *
      * ; Sets every action's condition to False
      * newKeyChord = keyChord.Transform((action) => ( action.Condition := False, return action ))
      * ```
@@ -899,10 +899,10 @@ class KeyChord
      * ```ahk2
      * ; Filters out actions with key "Esc"
      * filteredKeyChord = keyChord.Transform(action => action.Key != "Esc", true)
-     * 
+     *
      * ; Returns only the actions whos conditions are True
      * filteredKeyChord = keyChord.Transform(action => action.IsTrue(), true)
-     * 
+     *
      * ; Returns only the actions whos Commands are of the type "String"
      * filteredKeyChord = keyChord.Transform(action => (action.Command is "String"), true)
      * ```
@@ -916,7 +916,7 @@ class KeyChord
             {
                 if (func(action))
                     newKeyChord.AddActions(action)
-            } 
+            }
             else
             {
                 newAction := func(action)
@@ -932,7 +932,7 @@ class KeyChord
 
     /**
      * Finds all actions with true conditions for a given key.
-     * 
+     *
      * @param {String} key The key to search for.
      * @returns {KeyChord} The matching actions.
     **/
@@ -940,7 +940,7 @@ class KeyChord
 
     /**
      * Finds the first action with a true condition for a given key.
-     * 
+     *
      * @param {String} key - The key to match.
      * @returns {KCAction|undefined} The first matching action, or undefined if none found.
     **/
@@ -955,7 +955,7 @@ class KeyChord
 
     /**
      * Finds the last action with a true condition for a given key.
-     * 
+     *
      * @param {String} key - The key to match.
      * @returns {KCAction|undefined} The last matching action, or undefined if none found.
     **/
@@ -967,17 +967,17 @@ class KeyChord
         else
             KCManager.TimedToolTip("Error: Key not found.`nKey: " key, 3)
     }
-    
+
     /**
      * Returns all commands of a specific type.
-     * 
+     *
      * ```
      * testChord := KeyChord( ... )
      * commands := testChord.GetCommandsByType("String")
      * for command in commands
      *     MsgBox(command)
      * ```
-     * 
+     *
      * @param {String} type - The type of commands to return.
      * @returns {Array} An array of commands of the specified type.
      */
@@ -985,12 +985,12 @@ class KeyChord
 
     /**
      * Returns a string representation of the KeyChord, including nested KeyChords.
-     * 
+     *
      * ```
      * chord := KeyChord(KCAction("a", "Test command", True, "Test description"), KCAction("b", "Test command", True, "Test description"))
      * MsgBox(chord.ToString())
      * ```
-     * 
+     *
      * @param {String} [indent=""] The indentation string for formatting nested structures.
      * @returns {String} A formatted string representation of the KeyChord.
     **/
@@ -1005,10 +1005,10 @@ class KeyChord
 
         return Trim(out_str)
     }
-    
+
     /**
      * Matches a key pattern against an input.
-     * 
+     *
      * @param {String} pattern The key pattern to match.
      * @param {String} input The input to match against.
      * @returns {Boolean} True if the input matches the pattern, False otherwise.
@@ -1089,13 +1089,13 @@ class KCManager
 
     /**
      * Executes a KeyChord.
-     * 
+     *
      * ```
      * chord := KeyChord(KCAction("a", "Test command", True, "Test description"))
-     * 
+     *
      * KCManager.Execute(chord, 1, 5)
      * ```
-     * 
+     *
      * @param {KeyChord} chord The KeyChord to execute.
      * @param {Number} [mode=1] The execution mode. `1` = First True, `2` = Last True, `3` = All True.
      * @param {Number} [timeout=3] The timeout for execution.
@@ -1214,16 +1214,16 @@ class KCManager
 
     /**
      * Displays help for a KeyChord.
-     * 
+     *
      * ```
      * testChord := KeyChord()
-     * 
+     *
      * action1 := KCAction("n", () => Run("notepad"), True, "Notepad")
      * action2 := KCAction("h", () => KCManager.Help(testChord), True, "Displays Help")
-     * 
+     *
      * testChord.AddActions(action1, action2)
      * ```
-     * 
+     *
      * @param {KeyChord} chord The KeyChord to display help for.
      * @param {String} parent_key The parent key string.
     **/
@@ -1278,7 +1278,7 @@ class KCManager
                 spacePrefix := StrRepeat(" ", StrLen(linePrefix))
                 cmd_type := (Type(action.Command) == "KeyChord") ? "KeyChord" : "Action"
                 key_list.Add(, linePrefix . key_name, spacePrefix action.Description, spacePrefix condition, spacePrefix cmd_type)
-                
+
                 if (cmd_type == "KeyChord")
                 {
                     newParentPrefix := parentPrefix
@@ -1294,32 +1294,38 @@ class KCManager
 
     /**
      * Parses a key string into a more readable format.
-     * 
+     *
      * ```
      * key := "<^#>!a"
      * parsedKey := KCManager.ParseKey(key)
      * MsgBox(parsedKey) ; Output: "LCtrl+Win+RAlt+a"
      * ```
-     * 
+     *
      * @param {String} key - The key string to parse.
      * @returns {String} The parsed key string.
     **/
     static ParseKey(key)
     {
-        replacements := Map("<", "L", ">", "R", "+", "Shift+", "^", "Ctrl+", "!", "Alt+", "#", "Win+")
-        return RegExReplace(key, "([<>+^!#])", (m) => replacements[m.1])
+        static replacements := Map("<", "L", ">", "R", "+", "Shift+", "^", "Ctrl+", "!", "Alt+", "#", "Win+")
+
+        ReplaceModifier(m, *)
+        {
+            return replacements[m[1]]
+        }
+
+        return RegExReplace(key, "([<>+^!#])(?CReplaceModifier)")
     }
 
     /**
      * BlockingOverlay
      * Manages a blocking overlay GUI. Used to keep mouse presses from reaching the active window while input is being collected.
-     * 
+     *
      * Hopefully, this will be replaced with a more elegant solution in the future.
     **/
     class BlockingOverlay
     {
         static instance := ""
-    
+
         /**
          * Creates a new `BlockingOverlay` instance.
         **/
@@ -1331,7 +1337,7 @@ class KCManager
             this.overlay.Show("X0 Y0 W" A_ScreenWidth " H" A_ScreenHeight)
             WinSetTransparent(1, this.overlay)
         }
-    
+
         /**
          * Creates or returns the existing `BlockingOverlay` instance.
         **/
@@ -1342,7 +1348,7 @@ class KCManager
                 this.instance := this()
             }
         }
-    
+
         /**
          * Destroys the `BlockingOverlay` instance.
         **/
