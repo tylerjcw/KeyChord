@@ -1121,7 +1121,7 @@ class KCManager
             input := this.GetUserInput(timeout)
             this.TimedToolTip(input)
 
-            if not input or (input == "Timeout")
+            if (input == "" or input == "Timeout")
             {
                 if chord.RemindKeys
                     this.Help(chord, parent_key)
